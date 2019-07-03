@@ -1,7 +1,11 @@
 """
-License: Apache-2.0
-Author: Suofei Zhang | Hang Yu
-E-mail: zhangsuofei at njupt.edu.cn | hangyu5 at illinois.edu
+License: Apache 2.0
+Author: Ashley Gritzman
+E-mail: ashley.gritzman@za.ibm.com
+
+Credits: 
+  Suofei Zhang & Hang Yu, "Matrix-Capsules-EM-Tensorflow" 
+  https://github.com/www0wwwjs1/Matrix-Capsules-EM-Tensorflow
 """
 
 import tensorflow as tf
