@@ -73,9 +73,8 @@ flags.DEFINE_string('ckpt_name', None,
                       dir; name to load specific ckpt''')
 flags.DEFINE_string('params_path', None, 'path to JSON containing parameters')
 
-CCC_STORAGE = '/dccstor/astro/ashley/'
 LOCAL_STORAGE = './'
-flags.DEFINE_string('storage', CCC_STORAGE, 
+flags.DEFINE_string('storage', LOCAL_STORAGE, 
                     'directory where logs and data are stored')
 flags.DEFINE_string('db_name', 'capsules_ex1', 
                     'Name of the DB for mongo for sacred')
