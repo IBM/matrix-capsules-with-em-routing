@@ -3,7 +3,7 @@ channels:
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
-  - _tflow_select=2.3.0=mkl
+  - _tflow_select=2.1.0=gpu
   - absl-py=0.7.1=py36_0
   - astor=0.7.1=py36_0
   - blas=1.0=mkl
@@ -48,9 +48,10 @@ dependencies:
   - six=1.12.0=py36_0
   - sqlite=3.29.0=h7b6447c_0
   - tensorboard=1.11.0=py36hf484d3e_0
-  - tensorflow=1.11.0=mkl_py36ha6f0bda_0
-  - tensorflow-base=1.11.0=mkl_py36h3c3e929_0
+  - tensorflow=1.11.0=gpu_py36h4459f94_0
+  - tensorflow-base=1.11.0=gpu_py36h8e0ae2d_0
   - tensorflow-estimator=1.13.0=py_0
+  - tensorflow-gpu=1.11.0=h0d30ee6_0
   - termcolor=1.1.0=py36_1
   - tk=8.6.8=hbc83047_0
   - werkzeug=0.15.4=py_0
