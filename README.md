@@ -10,7 +10,7 @@ This implementation fixes a number of common issues that were found in other ope
 2. Numerical instability due to parent capsules with only one child
 3. Normalising the amount of data assigned to parent capsules
 
-If you would like more information about these issues, please refer to the associated [paper](https://arxiv.org/pdf/1907.00652.pdf) and blog (coming soon).
+If you would like more information about these issues, please refer to the associated [paper](https://arxiv.org/pdf/1907.00652.pdf) and [blog](https://medium.com/@ashleygritzman/available-now-open-source-implementation-of-hintons-matrix-capsules-with-em-routing-e5601825ee2a).
 
 # Usage
 
@@ -100,7 +100,7 @@ The graph below shows the test accuracy of our implementation after each trainin
 
 # Implementation Details
 
-If you would like more information on the implementation details, please refer to the associated [paper](https://arxiv.org/pdf/1907.00652.pdf) and blog (coming soon).
+If you would like more information on the implementation details, please refer to the associated [paper](https://arxiv.org/pdf/1907.00652.pdf) and [blog](https://medium.com/@ashleygritzman/available-now-open-source-implementation-of-hintons-matrix-capsules-with-em-routing-e5601825ee2a).
 
 # Acknowledgements
 
