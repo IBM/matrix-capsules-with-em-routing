@@ -1,7 +1,6 @@
 # Implementation of "Matrix Capsules with EM Routing"
 
-A TensorFlow implementation of [Matrix Capsules with EM Routing](https://openreview.net/pdf?id=HJWLfGWRb) by Hinton *et al.* (2018).
-
+A TensorFlow implementation of Hinton's paper [Matrix Capsules with EM Routing](https://openreview.net/pdf?id=HJWLfGWRb) by [Ashley Gritzman](https://github.com/ashleygritzman) from IBM Research AI ([ashley.gritzman@za.ibm.com](ashley.gritzman@za.ibm.com)). 
 
 This implementation fixes a number of common issues that were found in other open-source implementations, the main ones being:
 
@@ -107,6 +106,10 @@ If you would like more information on the implementation details, please refer t
 2. [Questions and answers](https://openreview.net/forum?id=HJWLfGWRb) on OpenReview, "Matrix capsules with EM routing"
 3. [Suofei Zhang's implementation](https://github.com/www0wwwjs1/Matrix-Capsules-EM-Tensorflow) on GitHub, "Matrix-Capsules-EM-Tensorflow" 
 4. [Guang Yang's implementation](https://github.com/gyang274/capsulesEM) on GitHub, "CapsulesEM"
+
+# Contributions
+
+Contributions are welcome, please submit a pull request. 
 
 # How to Cite this Work
 
