@@ -2,6 +2,9 @@
 capsenv.yml
 requirements.txt
 
+# logs
+logs/
+
 # smallNORB dataset
 data/smallNORB/mat/
 data/smallNORB/tfrecord/
