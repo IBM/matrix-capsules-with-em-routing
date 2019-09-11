@@ -1,0 +1,534 @@
+2019-09-10 21:28:26 INFO: Parameters saved to file: ./logs/smallNORB/20190910_/train/params/params.json
+2019-09-10 21:28:26 INFO: Using dataset: smallNORB
+2019-09-10 21:28:26 INFO: BUILD TRAIN GRAPH
+2019-09-10 21:28:26 WARNING: From train_val.py:83: The name tf.train.get_or_create_global_step is deprecated. Please use tf.compat.v1.train.get_or_create_global_step instead.
+
+2019-09-10 21:28:26 WARNING: From train_val.py:92: The name tf.train.exponential_decay is deprecated. Please use tf.compat.v1.train.exponential_decay instead.
+
+2019-09-10 21:28:26 WARNING: From train_val.py:96: The name tf.summary.scalar is deprecated. Please use tf.compat.v1.summary.scalar instead.
+
+2019-09-10 21:28:26 WARNING: From train_val.py:97: The name tf.train.AdamOptimizer is deprecated. Please use tf.compat.v1.train.AdamOptimizer instead.
+
+2019-09-10 21:28:26 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/data_pipeline_norb.py:42: The name tf.parse_single_example is deprecated. Please use tf.io.parse_single_example instead.
+
+2019-09-10 21:28:26 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/data_pipeline_norb.py:45: The name tf.FixedLenFeature is deprecated. Please use tf.io.FixedLenFeature instead.
+
+2019-09-10 21:28:26 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/data_pipeline_norb.py:87: The name tf.image.resize_images is deprecated. Please use tf.image.resize instead.
+
+2019-09-10 21:28:26 WARNING: From /home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/ops/image_ops_impl.py:1514: div (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Deprecated in favor of operator or tf.math.divide.
+2019-09-10 21:28:26 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/data_pipeline_norb.py:89: The name tf.random_crop is deprecated. Please use tf.image.random_crop instead.
+
+2019-09-10 21:28:26 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/data_pipeline_norb.py:207: DatasetV1.make_one_shot_iterator (from tensorflow.python.data.ops.dataset_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use `for ... in dataset:` to iterate over a dataset. If using `tf.estimator`, return the `Dataset` object directly from your input function. As a last resort, you can use `tf.compat.v1.data.make_one_shot_iterator(dataset)`.
+2019-09-10 21:28:26 INFO: TOWER 0
+2019-09-10 21:28:26 INFO: input shape: (64, 32, 32, 1)
+2019-09-10 21:28:26 INFO: relu_conv1 output shape: (64, 16, 16, 64)
+2019-09-10 21:28:26 INFO: primary_caps pose shape: (64, 16, 16, 8, 16)
+2019-09-10 21:28:26 INFO: primary_caps activation shape (64, 16, 16, 8, 1)
+2019-09-10 21:28:26 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/models.py:108: The name tf.summary.histogram is deprecated. Please use tf.compat.v1.summary.histogram instead.
+
+2019-09-10 21:28:26 INFO: lyr.conv_caps1 votes shape: (3136, 72, 16, 16)
+2019-09-10 21:28:26 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/utils.py:365: add_dispatch_support.<locals>.wrapper (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+2019-09-10 21:28:26 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/utils.py:552: to_float (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use `tf.cast` instead.
+2019-09-10 21:28:26 INFO: lyr.conv_caps1 pose_out shape: (64, 7, 7, 16, 16)
+2019-09-10 21:28:26 INFO: lyr.conv_caps1 activation_out shape: (64, 7, 7, 16, 1)
+2019-09-10 21:28:26 INFO: lyr.conv_caps2 votes shape: (1600, 144, 16, 16)
+2019-09-10 21:28:27 INFO: lyr.conv_caps2 pose_out shape: (64, 5, 5, 16, 16)
+2019-09-10 21:28:27 INFO: lyr.conv_caps2 activation_out shape: (64, 5, 5, 16, 1)
+2019-09-10 21:28:27 INFO: class_caps votes original shape: (1600, 16, 5, 16)
+2019-09-10 21:28:27 INFO: class_caps votes in to routing shape: (64, 400, 5, 16)
+2019-09-10 21:28:27 INFO: class_caps activation shape: (64, 5)
+2019-09-10 21:28:27 INFO: class_caps pose shape: (64, 5, 16)
+2019-09-10 21:28:27 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/models.py:290: The name tf.train.get_global_step is deprecated. Please use tf.compat.v1.train.get_global_step instead.
+
+2019-09-10 21:28:30 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/metrics.py:27: to_int32 (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use `tf.cast` instead.
+2019-09-10 21:28:30 WARNING: From train_val.py:208: The name tf.train.Saver is deprecated. Please use tf.compat.v1.train.Saver instead.
+
+2019-09-10 21:28:30 INFO: Trainable Parameters: 67154
+2019-09-10 21:28:30 WARNING: From train_val.py:216: The name tf.summary.merge_all is deprecated. Please use tf.compat.v1.summary.merge_all instead.
+
+2019-09-10 21:28:30 INFO: BUILD VALIDATION GRAPH
+2019-09-10 21:28:30 INFO: input shape: (64, 32, 32, 1)
+2019-09-10 21:28:30 INFO: relu_conv1 output shape: (64, 16, 16, 64)
+2019-09-10 21:28:30 INFO: primary_caps pose shape: (64, 16, 16, 8, 16)
+2019-09-10 21:28:30 INFO: primary_caps activation shape (64, 16, 16, 8, 1)
+2019-09-10 21:28:30 INFO: lyr.conv_caps1 votes shape: (3136, 72, 16, 16)
+2019-09-10 21:28:30 INFO: lyr.conv_caps1 pose_out shape: (64, 7, 7, 16, 16)
+2019-09-10 21:28:30 INFO: lyr.conv_caps1 activation_out shape: (64, 7, 7, 16, 1)
+2019-09-10 21:28:30 INFO: lyr.conv_caps2 votes shape: (1600, 144, 16, 16)
+2019-09-10 21:28:30 INFO: lyr.conv_caps2 pose_out shape: (64, 5, 5, 16, 16)
+2019-09-10 21:28:30 INFO: lyr.conv_caps2 activation_out shape: (64, 5, 5, 16, 1)
+2019-09-10 21:28:30 INFO: class_caps votes original shape: (1600, 16, 5, 16)
+2019-09-10 21:28:30 INFO: class_caps votes in to routing shape: (64, 400, 5, 16)
+2019-09-10 21:28:30 INFO: class_caps activation shape: (64, 5)
+2019-09-10 21:28:30 INFO: class_caps pose shape: (64, 5, 16)
+2019-09-10 21:28:36 WARNING: From train_val.py:346: The name tf.summary.FileWriter is deprecated. Please use tf.compat.v1.summary.FileWriter instead.
+
+2019-09-10 21:28:59 CRITICAL: Traceback (most recent call last):
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1356, in _do_call
+    return fn(*args)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1341, in _run_fn
+    options, feed_dict, fetch_list, target_list, run_metadata)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1429, in _call_tf_sessionrun
+    run_metadata)
+tensorflow.python.framework.errors_impl.InternalError: 2 root error(s) found.
+  (0) Internal: cuDNN launch failure : input shape ([64,1,32,32])
+	 [[{{node tower_0/BatchNorm/FusedBatchNorm}}]]
+	 [[tower_0/gradients/tower_0/lyr.conv_caps2/votes/Tile_grad/Sum/_41]]
+  (1) Internal: cuDNN launch failure : input shape ([64,1,32,32])
+	 [[{{node tower_0/BatchNorm/FusedBatchNorm}}]]
+0 successful operations.
+0 derived errors ignored.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "train_val.py", line 670, in <module>
+    tf.app.run()
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/platform/app.py", line 40, in run
+    _run(main=main, argv=argv, flags_parser=_parse_flags_tolerate_undef)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/absl/app.py", line 300, in run
+    _run_main(main, args)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/absl/app.py", line 251, in _run_main
+    sys.exit(main(argv))
+  File "train_val.py", line 400, in main
+    run_metadata=run_metadata)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 950, in run
+    run_metadata_ptr)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1173, in _run
+    feed_dict_tensor, options, run_metadata)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1350, in _do_run
+    run_metadata)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1370, in _do_call
+    raise type(e)(node_def, op, message)
+tensorflow.python.framework.errors_impl.InternalError: 2 root error(s) found.
+  (0) Internal: cuDNN launch failure : input shape ([64,1,32,32])
+	 [[node tower_0/BatchNorm/FusedBatchNorm (defined at /tmp/tmpn5pkstxl.py:14) ]]
+	 [[tower_0/gradients/tower_0/lyr.conv_caps2/votes/Tile_grad/Sum/_41]]
+  (1) Internal: cuDNN launch failure : input shape ([64,1,32,32])
+	 [[node tower_0/BatchNorm/FusedBatchNorm (defined at /tmp/tmpn5pkstxl.py:14) ]]
+0 successful operations.
+0 derived errors ignored.
+
+Errors may have originated from an input operation.
+Input Source operations connected to node tower_0/BatchNorm/FusedBatchNorm:
+ tower_0/BatchNorm/Const_1 (defined at /home/pxd256/Workspace/matrix-capsules-with-em-routing/models.py:57)	
+ split (defined at train_val.py:112)
+
+Input Source operations connected to node tower_0/BatchNorm/FusedBatchNorm:
+ tower_0/BatchNorm/Const_1 (defined at /home/pxd256/Workspace/matrix-capsules-with-em-routing/models.py:57)	
+ split (defined at train_val.py:112)
+
+Original stack trace for 'tower_0/BatchNorm/FusedBatchNorm':
+  File "train_val.py", line 670, in <module>
+    tf.app.run()
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/platform/app.py", line 40, in run
+    _run(main=main, argv=argv, flags_parser=_parse_flags_tolerate_undef)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/absl/app.py", line 300, in run
+    _run_main(main, args)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/absl/app.py", line 251, in _run_main
+    sys.exit(main(argv))
+  File "train_val.py", line 141, in main
+    is_train=True)
+  File "train_val.py", line 540, in tower_fn
+    output = build_arch(x, is_train, num_classes=num_classes)
+  File "/home/pxd256/Workspace/matrix-capsules-with-em-routing/models.py", line 57, in build_arch_smallnorb
+    trainable=is_train)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/contrib/framework/python/ops/arg_scope.py", line 182, in func_with_args
+    return func(*args, **current_args)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/contrib/layers/python/layers/layers.py", line 650, in batch_norm
+    outputs = layer.apply(inputs, training=is_training)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/base_layer.py", line 1479, in apply
+    return self.__call__(inputs, *args, **kwargs)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/layers/base.py", line 537, in __call__
+    outputs = super(Layer, self).__call__(inputs, *args, **kwargs)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/keras/engine/base_layer.py", line 634, in __call__
+    outputs = call_fn(inputs, *args, **kwargs)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/autograph/impl/api.py", line 146, in wrapper
+    ), args, kwargs)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/autograph/impl/api.py", line 450, in converted_call
+    result = converted_f(*effective_args, **kwargs)
+  File "/tmp/tmpn5pkstxl.py", line 14, in tf__call
+    retval_ = ag__.converted_call('call', super(BatchNormalization, self), ag__.ConversionOptions(recursive=True, force_conversion=False, optional_features=(), internal_convert_user_code=True), (inputs,), {'training': training})
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/autograph/impl/api.py", line 356, in converted_call
+    return _call_unconverted(f, args, kwargs)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/autograph/impl/api.py", line 253, in _call_unconverted
+    return f(*args, **kwargs)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/keras/layers/normalization.py", line 651, in call
+    outputs = self._fused_batch_norm(inputs, training=training)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/keras/layers/normalization.py", line 494, in _fused_batch_norm
+    training, _fused_batch_norm_training, _fused_batch_norm_inference)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/keras/utils/tf_utils.py", line 58, in smart_cond
+    pred, true_fn=true_fn, false_fn=false_fn, name=name)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/framework/smart_cond.py", line 54, in smart_cond
+    return true_fn()
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/keras/layers/normalization.py", line 480, in _fused_batch_norm_training
+    data_format=self._data_format)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/ops/nn_impl.py", line 1329, in fused_batch_norm
+    name=name)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/ops/gen_nn_ops.py", line 3946, in _fused_batch_norm
+    name=name)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/framework/op_def_library.py", line 788, in _apply_op_helper
+    op_def=op_def)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/util/deprecation.py", line 507, in new_func
+    return func(*args, **kwargs)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/framework/ops.py", line 3616, in create_op
+    op_def=op_def)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/framework/ops.py", line 2005, in __init__
+    self._traceback = tf_stack.extract_stack()
+
+
+2019-09-10 21:31:12 INFO: Parameters saved to file: ./logs/smallNORB/20190910_/train/params/params.json
+2019-09-10 21:31:12 INFO: Using dataset: smallNORB
+2019-09-10 21:31:12 INFO: BUILD TRAIN GRAPH
+2019-09-10 21:31:12 WARNING: From train_val.py:83: The name tf.train.get_or_create_global_step is deprecated. Please use tf.compat.v1.train.get_or_create_global_step instead.
+
+2019-09-10 21:31:12 WARNING: From train_val.py:92: The name tf.train.exponential_decay is deprecated. Please use tf.compat.v1.train.exponential_decay instead.
+
+2019-09-10 21:31:12 WARNING: From train_val.py:96: The name tf.summary.scalar is deprecated. Please use tf.compat.v1.summary.scalar instead.
+
+2019-09-10 21:31:12 WARNING: From train_val.py:97: The name tf.train.AdamOptimizer is deprecated. Please use tf.compat.v1.train.AdamOptimizer instead.
+
+2019-09-10 21:31:12 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/data_pipeline_norb.py:42: The name tf.parse_single_example is deprecated. Please use tf.io.parse_single_example instead.
+
+2019-09-10 21:31:12 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/data_pipeline_norb.py:45: The name tf.FixedLenFeature is deprecated. Please use tf.io.FixedLenFeature instead.
+
+2019-09-10 21:31:12 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/data_pipeline_norb.py:87: The name tf.image.resize_images is deprecated. Please use tf.image.resize instead.
+
+2019-09-10 21:31:12 WARNING: From /home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/ops/image_ops_impl.py:1514: div (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Deprecated in favor of operator or tf.math.divide.
+2019-09-10 21:31:12 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/data_pipeline_norb.py:89: The name tf.random_crop is deprecated. Please use tf.image.random_crop instead.
+
+2019-09-10 21:31:12 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/data_pipeline_norb.py:207: DatasetV1.make_one_shot_iterator (from tensorflow.python.data.ops.dataset_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use `for ... in dataset:` to iterate over a dataset. If using `tf.estimator`, return the `Dataset` object directly from your input function. As a last resort, you can use `tf.compat.v1.data.make_one_shot_iterator(dataset)`.
+2019-09-10 21:31:12 INFO: TOWER 0
+2019-09-10 21:31:12 INFO: input shape: (64, 32, 32, 1)
+2019-09-10 21:31:12 INFO: relu_conv1 output shape: (64, 16, 16, 64)
+2019-09-10 21:31:12 INFO: primary_caps pose shape: (64, 16, 16, 8, 16)
+2019-09-10 21:31:12 INFO: primary_caps activation shape (64, 16, 16, 8, 1)
+2019-09-10 21:31:12 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/models.py:108: The name tf.summary.histogram is deprecated. Please use tf.compat.v1.summary.histogram instead.
+
+2019-09-10 21:31:13 INFO: lyr.conv_caps1 votes shape: (3136, 72, 16, 16)
+2019-09-10 21:31:13 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/utils.py:365: add_dispatch_support.<locals>.wrapper (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+2019-09-10 21:31:13 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/utils.py:552: to_float (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use `tf.cast` instead.
+2019-09-10 21:31:13 INFO: lyr.conv_caps1 pose_out shape: (64, 7, 7, 16, 16)
+2019-09-10 21:31:13 INFO: lyr.conv_caps1 activation_out shape: (64, 7, 7, 16, 1)
+2019-09-10 21:31:13 INFO: lyr.conv_caps2 votes shape: (1600, 144, 16, 16)
+2019-09-10 21:31:13 INFO: lyr.conv_caps2 pose_out shape: (64, 5, 5, 16, 16)
+2019-09-10 21:31:13 INFO: lyr.conv_caps2 activation_out shape: (64, 5, 5, 16, 1)
+2019-09-10 21:31:13 INFO: class_caps votes original shape: (1600, 16, 5, 16)
+2019-09-10 21:31:13 INFO: class_caps votes in to routing shape: (64, 400, 5, 16)
+2019-09-10 21:31:13 INFO: class_caps activation shape: (64, 5)
+2019-09-10 21:31:13 INFO: class_caps pose shape: (64, 5, 16)
+2019-09-10 21:31:13 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/models.py:290: The name tf.train.get_global_step is deprecated. Please use tf.compat.v1.train.get_global_step instead.
+
+2019-09-10 21:31:16 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/metrics.py:27: to_int32 (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use `tf.cast` instead.
+2019-09-10 21:31:16 WARNING: From train_val.py:208: The name tf.train.Saver is deprecated. Please use tf.compat.v1.train.Saver instead.
+
+2019-09-10 21:31:16 INFO: Trainable Parameters: 67154
+2019-09-10 21:31:16 WARNING: From train_val.py:216: The name tf.summary.merge_all is deprecated. Please use tf.compat.v1.summary.merge_all instead.
+
+2019-09-10 21:31:16 INFO: BUILD VALIDATION GRAPH
+2019-09-10 21:31:16 INFO: input shape: (64, 32, 32, 1)
+2019-09-10 21:31:16 INFO: relu_conv1 output shape: (64, 16, 16, 64)
+2019-09-10 21:31:16 INFO: primary_caps pose shape: (64, 16, 16, 8, 16)
+2019-09-10 21:31:16 INFO: primary_caps activation shape (64, 16, 16, 8, 1)
+2019-09-10 21:31:16 INFO: lyr.conv_caps1 votes shape: (3136, 72, 16, 16)
+2019-09-10 21:31:16 INFO: lyr.conv_caps1 pose_out shape: (64, 7, 7, 16, 16)
+2019-09-10 21:31:16 INFO: lyr.conv_caps1 activation_out shape: (64, 7, 7, 16, 1)
+2019-09-10 21:31:16 INFO: lyr.conv_caps2 votes shape: (1600, 144, 16, 16)
+2019-09-10 21:31:17 INFO: lyr.conv_caps2 pose_out shape: (64, 5, 5, 16, 16)
+2019-09-10 21:31:17 INFO: lyr.conv_caps2 activation_out shape: (64, 5, 5, 16, 1)
+2019-09-10 21:31:17 INFO: class_caps votes original shape: (1600, 16, 5, 16)
+2019-09-10 21:31:17 INFO: class_caps votes in to routing shape: (64, 400, 5, 16)
+2019-09-10 21:31:17 INFO: class_caps activation shape: (64, 5)
+2019-09-10 21:31:17 INFO: class_caps pose shape: (64, 5, 16)
+2019-09-10 21:31:18 WARNING: From train_val.py:346: The name tf.summary.FileWriter is deprecated. Please use tf.compat.v1.summary.FileWriter instead.
+
+2019-09-10 21:31:50 CRITICAL: Traceback (most recent call last):
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1356, in _do_call
+    return fn(*args)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1341, in _run_fn
+    options, feed_dict, fetch_list, target_list, run_metadata)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1429, in _call_tf_sessionrun
+    run_metadata)
+tensorflow.python.framework.errors_impl.ResourceExhaustedError: 2 root error(s) found.
+  (0) Resource exhausted: OOM when allocating tensor with shape[64,5,5,144,16,16] and type float on /job:localhost/replica:0/task:0/device:GPU:0 by allocator GPU_0_bfc
+	 [[{{node tower_0/lyr.conv_caps2/routing/em_routing/m_step_2/Square}}]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info.
+
+	 [[tower_0/total_loss/spread_loss/Mean/_29]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info.
+
+  (1) Resource exhausted: OOM when allocating tensor with shape[64,5,5,144,16,16] and type float on /job:localhost/replica:0/task:0/device:GPU:0 by allocator GPU_0_bfc
+	 [[{{node tower_0/lyr.conv_caps2/routing/em_routing/m_step_2/Square}}]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info.
+
+0 successful operations.
+0 derived errors ignored.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "train_val.py", line 670, in <module>
+    tf.app.run()
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/platform/app.py", line 40, in run
+    _run(main=main, argv=argv, flags_parser=_parse_flags_tolerate_undef)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/absl/app.py", line 300, in run
+    _run_main(main, args)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/absl/app.py", line 251, in _run_main
+    sys.exit(main(argv))
+  File "train_val.py", line 400, in main
+    run_metadata=run_metadata)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 950, in run
+    run_metadata_ptr)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1173, in _run
+    feed_dict_tensor, options, run_metadata)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1350, in _do_run
+    run_metadata)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1370, in _do_call
+    raise type(e)(node_def, op, message)
+tensorflow.python.framework.errors_impl.ResourceExhaustedError: 2 root error(s) found.
+  (0) Resource exhausted: OOM when allocating tensor with shape[64,5,5,144,16,16] and type float on /job:localhost/replica:0/task:0/device:GPU:0 by allocator GPU_0_bfc
+	 [[node tower_0/lyr.conv_caps2/routing/em_routing/m_step_2/Square (defined at /home/pxd256/Workspace/matrix-capsules-with-em-routing/em_routing.py:338) ]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info.
+
+	 [[tower_0/total_loss/spread_loss/Mean/_29]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info.
+
+  (1) Resource exhausted: OOM when allocating tensor with shape[64,5,5,144,16,16] and type float on /job:localhost/replica:0/task:0/device:GPU:0 by allocator GPU_0_bfc
+	 [[node tower_0/lyr.conv_caps2/routing/em_routing/m_step_2/Square (defined at /home/pxd256/Workspace/matrix-capsules-with-em-routing/em_routing.py:338) ]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info.
+
+0 successful operations.
+0 derived errors ignored.
+
+Original stack trace for 'tower_0/lyr.conv_caps2/routing/em_routing/m_step_2/Square':
+  File "train_val.py", line 670, in <module>
+    tf.app.run()
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/platform/app.py", line 40, in run
+    _run(main=main, argv=argv, flags_parser=_parse_flags_tolerate_undef)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/absl/app.py", line 300, in run
+    _run_main(main, args)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/absl/app.py", line 251, in _run_main
+    sys.exit(main(argv))
+  File "train_val.py", line 141, in main
+    is_train=True)
+  File "train_val.py", line 540, in tower_fn
+    output = build_arch(x, is_train, num_classes=num_classes)
+  File "/home/pxd256/Workspace/matrix-capsules-with-em-routing/models.py", line 136, in build_arch_smallnorb
+    weights_regularizer = weights_regularizer)
+  File "/home/pxd256/Workspace/matrix-capsules-with-em-routing/layers.py", line 114, in conv_caps
+    spatial_routing_matrix)
+  File "/home/pxd256/Workspace/matrix-capsules-with-em-routing/em_routing.py", line 215, in em_routing
+    inverse_temperature=inverse_temperature)
+  File "/home/pxd256/Workspace/matrix-capsules-with-em-routing/em_routing.py", line 338, in m_step
+    var_j_numerator = tf.reduce_sum(rr_prime * tf.square(votes - mean_j),
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/ops/gen_math_ops.py", line 10698, in square
+    "Square", x=x, name=name)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/framework/op_def_library.py", line 788, in _apply_op_helper
+    op_def=op_def)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/util/deprecation.py", line 507, in new_func
+    return func(*args, **kwargs)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/framework/ops.py", line 3616, in create_op
+    op_def=op_def)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/framework/ops.py", line 2005, in __init__
+    self._traceback = tf_stack.extract_stack()
+
+
+2019-09-10 21:32:48 INFO: Parameters saved to file: ./logs/smallNORB/20190910_/train/params/params.json
+2019-09-10 21:32:48 INFO: Using dataset: smallNORB
+2019-09-10 21:32:48 INFO: BUILD TRAIN GRAPH
+2019-09-10 21:32:48 WARNING: From train_val.py:83: The name tf.train.get_or_create_global_step is deprecated. Please use tf.compat.v1.train.get_or_create_global_step instead.
+
+2019-09-10 21:32:48 WARNING: From train_val.py:92: The name tf.train.exponential_decay is deprecated. Please use tf.compat.v1.train.exponential_decay instead.
+
+2019-09-10 21:32:48 WARNING: From train_val.py:96: The name tf.summary.scalar is deprecated. Please use tf.compat.v1.summary.scalar instead.
+
+2019-09-10 21:32:48 WARNING: From train_val.py:97: The name tf.train.AdamOptimizer is deprecated. Please use tf.compat.v1.train.AdamOptimizer instead.
+
+2019-09-10 21:32:48 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/data_pipeline_norb.py:42: The name tf.parse_single_example is deprecated. Please use tf.io.parse_single_example instead.
+
+2019-09-10 21:32:48 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/data_pipeline_norb.py:45: The name tf.FixedLenFeature is deprecated. Please use tf.io.FixedLenFeature instead.
+
+2019-09-10 21:32:48 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/data_pipeline_norb.py:87: The name tf.image.resize_images is deprecated. Please use tf.image.resize instead.
+
+2019-09-10 21:32:48 WARNING: From /home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/ops/image_ops_impl.py:1514: div (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Deprecated in favor of operator or tf.math.divide.
+2019-09-10 21:32:48 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/data_pipeline_norb.py:89: The name tf.random_crop is deprecated. Please use tf.image.random_crop instead.
+
+2019-09-10 21:32:48 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/data_pipeline_norb.py:207: DatasetV1.make_one_shot_iterator (from tensorflow.python.data.ops.dataset_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use `for ... in dataset:` to iterate over a dataset. If using `tf.estimator`, return the `Dataset` object directly from your input function. As a last resort, you can use `tf.compat.v1.data.make_one_shot_iterator(dataset)`.
+2019-09-10 21:32:48 INFO: TOWER 0
+2019-09-10 21:32:48 INFO: input shape: (64, 32, 32, 1)
+2019-09-10 21:32:49 INFO: relu_conv1 output shape: (64, 16, 16, 64)
+2019-09-10 21:32:49 INFO: primary_caps pose shape: (64, 16, 16, 8, 16)
+2019-09-10 21:32:49 INFO: primary_caps activation shape (64, 16, 16, 8, 1)
+2019-09-10 21:32:49 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/models.py:108: The name tf.summary.histogram is deprecated. Please use tf.compat.v1.summary.histogram instead.
+
+2019-09-10 21:32:49 INFO: lyr.conv_caps1 votes shape: (3136, 72, 16, 16)
+2019-09-10 21:32:49 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/utils.py:365: add_dispatch_support.<locals>.wrapper (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+2019-09-10 21:32:49 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/utils.py:552: to_float (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use `tf.cast` instead.
+2019-09-10 21:32:49 INFO: lyr.conv_caps1 pose_out shape: (64, 7, 7, 16, 16)
+2019-09-10 21:32:49 INFO: lyr.conv_caps1 activation_out shape: (64, 7, 7, 16, 1)
+2019-09-10 21:32:49 INFO: lyr.conv_caps2 votes shape: (1600, 144, 16, 16)
+2019-09-10 21:32:49 INFO: lyr.conv_caps2 pose_out shape: (64, 5, 5, 16, 16)
+2019-09-10 21:32:49 INFO: lyr.conv_caps2 activation_out shape: (64, 5, 5, 16, 1)
+2019-09-10 21:32:49 INFO: class_caps votes original shape: (1600, 16, 5, 16)
+2019-09-10 21:32:49 INFO: class_caps votes in to routing shape: (64, 400, 5, 16)
+2019-09-10 21:32:49 INFO: class_caps activation shape: (64, 5)
+2019-09-10 21:32:49 INFO: class_caps pose shape: (64, 5, 16)
+2019-09-10 21:32:49 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/models.py:290: The name tf.train.get_global_step is deprecated. Please use tf.compat.v1.train.get_global_step instead.
+
+2019-09-10 21:32:52 WARNING: From /home/pxd256/Workspace/matrix-capsules-with-em-routing/metrics.py:27: to_int32 (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use `tf.cast` instead.
+2019-09-10 21:32:52 WARNING: From train_val.py:208: The name tf.train.Saver is deprecated. Please use tf.compat.v1.train.Saver instead.
+
+2019-09-10 21:32:52 INFO: Trainable Parameters: 67154
+2019-09-10 21:32:52 WARNING: From train_val.py:216: The name tf.summary.merge_all is deprecated. Please use tf.compat.v1.summary.merge_all instead.
+
+2019-09-10 21:32:52 INFO: BUILD VALIDATION GRAPH
+2019-09-10 21:32:52 INFO: input shape: (64, 32, 32, 1)
+2019-09-10 21:32:52 INFO: relu_conv1 output shape: (64, 16, 16, 64)
+2019-09-10 21:32:52 INFO: primary_caps pose shape: (64, 16, 16, 8, 16)
+2019-09-10 21:32:52 INFO: primary_caps activation shape (64, 16, 16, 8, 1)
+2019-09-10 21:32:52 INFO: lyr.conv_caps1 votes shape: (3136, 72, 16, 16)
+2019-09-10 21:32:52 INFO: lyr.conv_caps1 pose_out shape: (64, 7, 7, 16, 16)
+2019-09-10 21:32:52 INFO: lyr.conv_caps1 activation_out shape: (64, 7, 7, 16, 1)
+2019-09-10 21:32:52 INFO: lyr.conv_caps2 votes shape: (1600, 144, 16, 16)
+2019-09-10 21:32:53 INFO: lyr.conv_caps2 pose_out shape: (64, 5, 5, 16, 16)
+2019-09-10 21:32:53 INFO: lyr.conv_caps2 activation_out shape: (64, 5, 5, 16, 1)
+2019-09-10 21:32:53 INFO: class_caps votes original shape: (1600, 16, 5, 16)
+2019-09-10 21:32:53 INFO: class_caps votes in to routing shape: (64, 400, 5, 16)
+2019-09-10 21:32:53 INFO: class_caps activation shape: (64, 5)
+2019-09-10 21:32:53 INFO: class_caps pose shape: (64, 5, 16)
+2019-09-10 21:32:54 WARNING: From train_val.py:346: The name tf.summary.FileWriter is deprecated. Please use tf.compat.v1.summary.FileWriter instead.
+
+2019-09-10 21:33:25 CRITICAL: Traceback (most recent call last):
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1356, in _do_call
+    return fn(*args)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1341, in _run_fn
+    options, feed_dict, fetch_list, target_list, run_metadata)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1429, in _call_tf_sessionrun
+    run_metadata)
+tensorflow.python.framework.errors_impl.ResourceExhaustedError: 2 root error(s) found.
+  (0) Resource exhausted: OOM when allocating tensor with shape[64,5,5,144,16,16] and type float on /job:localhost/replica:0/task:0/device:GPU:0 by allocator GPU_0_bfc
+	 [[{{node tower_0/lyr.conv_caps2/routing/em_routing/m_step_2/mul_1}}]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info.
+
+	 [[tower_0/gradients/tower_0/relu_conv1/BiasAdd_grad/BiasAddGrad/_57]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info.
+
+  (1) Resource exhausted: OOM when allocating tensor with shape[64,5,5,144,16,16] and type float on /job:localhost/replica:0/task:0/device:GPU:0 by allocator GPU_0_bfc
+	 [[{{node tower_0/lyr.conv_caps2/routing/em_routing/m_step_2/mul_1}}]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info.
+
+0 successful operations.
+0 derived errors ignored.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "train_val.py", line 670, in <module>
+    tf.app.run()
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/platform/app.py", line 40, in run
+    _run(main=main, argv=argv, flags_parser=_parse_flags_tolerate_undef)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/absl/app.py", line 300, in run
+    _run_main(main, args)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/absl/app.py", line 251, in _run_main
+    sys.exit(main(argv))
+  File "train_val.py", line 400, in main
+    run_metadata=run_metadata)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 950, in run
+    run_metadata_ptr)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1173, in _run
+    feed_dict_tensor, options, run_metadata)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1350, in _do_run
+    run_metadata)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1370, in _do_call
+    raise type(e)(node_def, op, message)
+tensorflow.python.framework.errors_impl.ResourceExhaustedError: 2 root error(s) found.
+  (0) Resource exhausted: OOM when allocating tensor with shape[64,5,5,144,16,16] and type float on /job:localhost/replica:0/task:0/device:GPU:0 by allocator GPU_0_bfc
+	 [[node tower_0/lyr.conv_caps2/routing/em_routing/m_step_2/mul_1 (defined at /home/pxd256/Workspace/matrix-capsules-with-em-routing/em_routing.py:326) ]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info.
+
+	 [[tower_0/gradients/tower_0/relu_conv1/BiasAdd_grad/BiasAddGrad/_57]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info.
+
+  (1) Resource exhausted: OOM when allocating tensor with shape[64,5,5,144,16,16] and type float on /job:localhost/replica:0/task:0/device:GPU:0 by allocator GPU_0_bfc
+	 [[node tower_0/lyr.conv_caps2/routing/em_routing/m_step_2/mul_1 (defined at /home/pxd256/Workspace/matrix-capsules-with-em-routing/em_routing.py:326) ]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info.
+
+0 successful operations.
+0 derived errors ignored.
+
+Errors may have originated from an input operation.
+Input Source operations connected to node tower_0/lyr.conv_caps2/routing/em_routing/m_step_2/mul_1:
+ tower_0/lyr.conv_caps2/routing/Reshape (defined at /home/pxd256/Workspace/matrix-capsules-with-em-routing/em_routing.py:112)	
+ tower_0/lyr.conv_caps2/routing/em_routing/m_step_2/rr_prime (defined at /home/pxd256/Workspace/matrix-capsules-with-em-routing/em_routing.py:300)
+
+Input Source operations connected to node tower_0/lyr.conv_caps2/routing/em_routing/m_step_2/mul_1:
+ tower_0/lyr.conv_caps2/routing/Reshape (defined at /home/pxd256/Workspace/matrix-capsules-with-em-routing/em_routing.py:112)	
+ tower_0/lyr.conv_caps2/routing/em_routing/m_step_2/rr_prime (defined at /home/pxd256/Workspace/matrix-capsules-with-em-routing/em_routing.py:300)
+
+Original stack trace for 'tower_0/lyr.conv_caps2/routing/em_routing/m_step_2/mul_1':
+  File "train_val.py", line 670, in <module>
+    tf.app.run()
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/platform/app.py", line 40, in run
+    _run(main=main, argv=argv, flags_parser=_parse_flags_tolerate_undef)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/absl/app.py", line 300, in run
+    _run_main(main, args)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/absl/app.py", line 251, in _run_main
+    sys.exit(main(argv))
+  File "train_val.py", line 141, in main
+    is_train=True)
+  File "train_val.py", line 540, in tower_fn
+    output = build_arch(x, is_train, num_classes=num_classes)
+  File "/home/pxd256/Workspace/matrix-capsules-with-em-routing/models.py", line 136, in build_arch_smallnorb
+    weights_regularizer = weights_regularizer)
+  File "/home/pxd256/Workspace/matrix-capsules-with-em-routing/layers.py", line 114, in conv_caps
+    spatial_routing_matrix)
+  File "/home/pxd256/Workspace/matrix-capsules-with-em-routing/em_routing.py", line 215, in em_routing
+    inverse_temperature=inverse_temperature)
+  File "/home/pxd256/Workspace/matrix-capsules-with-em-routing/em_routing.py", line 326, in m_step
+    mean_j_numerator = tf.reduce_sum(rr_prime * votes,
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/ops/math_ops.py", line 884, in binary_op_wrapper
+    return func(x, y, name=name)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/ops/math_ops.py", line 1180, in _mul_dispatch
+    return gen_math_ops.mul(x, y, name=name)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/ops/gen_math_ops.py", line 6490, in mul
+    "Mul", x=x, y=y, name=name)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/framework/op_def_library.py", line 788, in _apply_op_helper
+    op_def=op_def)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/util/deprecation.py", line 507, in new_func
+    return func(*args, **kwargs)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/framework/ops.py", line 3616, in create_op
+    op_def=op_def)
+  File "/home/pxd256/.local/lib/python3.6/site-packages/tensorflow/python/framework/ops.py", line 2005, in __init__
+    self._traceback = tf_stack.extract_stack()
+
+

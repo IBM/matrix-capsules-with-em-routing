@@ -315,9 +315,14 @@ def main(args):
           
   #----- SESSION TRAIN -----#
   # Session settings
-  sess_train = tf.Session(config=tf.ConfigProto(allow_soft_placement=True, 
-                                                log_device_placement=False), 
+  sess_train = tf.Session(config=tf.ConfigProto(allow_soft_placement=True,
+                                                log_device_placement=False),
                           graph=g_train)
+
+  # Perry: added in for RTX 2070 incompatibility workaround
+  #config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
+  #config.gpu_options.allow_growth = True
+  #sess_train = tf.Session(config=config, graph=g_train)
 
   # Debugger
   # AG 05/06/2018: Debugging using either command line or TensorBoard
