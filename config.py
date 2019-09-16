@@ -72,6 +72,7 @@ flags.DEFINE_string('ckpt_name', None,
                     '''None to load the latest ckpt; all to load all ckpts in 
                       dir; name to load specific ckpt''')
 flags.DEFINE_string('params_path', None, 'path to JSON containing parameters')
+flags.DEFINE_string('logdir', 'default', 'subdirectory in which logs are saved')
 
 LOCAL_STORAGE = './'
 flags.DEFINE_string('storage', LOCAL_STORAGE, 
@@ -91,7 +92,7 @@ def setup_train_directories():
   # Set log directory
   date_stamp = datetime.now().strftime('%Y%m%d_%H:%M:%S')
   save_dir = os.path.join(tf.app.flags.FLAGS.storage, 'logs/',
-              tf.app.flags.FLAGS.dataset)
+              tf.app.flags.FLAGS.dataset, tf.app.flags.FLAGS.logdir)
   train_dir = '{}/{}_{}/train'.format(save_dir, date_stamp, FLAGS.name)
 
   # Clear the train log directory
