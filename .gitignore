@@ -1,5 +1,5 @@
 # environment settings
-capsenv.yml
+capsenv*.yml
 requirements.txt
 
 # logs
