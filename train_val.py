@@ -436,7 +436,7 @@ def main(args):
           summary_writer.add_summary(trn_summary_v, step)
           
       # SAVE MODEL
-      if (step % SAVE_MODEL_FREQ) == 100:  
+      if (step % SAVE_MODEL_FREQ) == 0:
         logger.info("Save Model")
         with g_train.as_default():
           train_checkpoint_dir = train_dir + '/checkpoint'
@@ -448,7 +448,7 @@ def main(args):
           saver.save(sess_train, ckpt_path, global_step=step)
       
       # VALIDATE MODEL
-      if (step % VAL_FREQ) == 100:    
+      if (step % VAL_FREQ) == 0:
         #----- Validation -----#
         with g_val.as_default():
           logger.info("Start Validation")

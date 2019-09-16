@@ -26,8 +26,9 @@ flags.DEFINE_string('f', '', 'kernel')
 #------------------------------------------------------------------------------
 # set to 64 according to authors (https://openreview.net/forum?id=HJWLfGWRb)
 flags.DEFINE_integer('batch_size', 64, 'batch size in total across all gpus') 
-flags.DEFINE_integer('epoch', 2000, 'epoch')
-flags.DEFINE_integer('iter_routing', 3, 'number of iterations')
+flags.DEFINE_integer('epoch', 30, 'epoch')
+flags.DEFINE_integer('hours', 2400,'number of training hours')
+flags.DEFINE_integer('iter_routing', 2, 'number of iterations')
 flags.DEFINE_integer('num_gpus', 1, 'number of GPUs')
 flags.DEFINE_float('epsilon', 1e-9, 'epsilon')
 flags.DEFINE_float('lrn_rate', 3e-3, 'learning rate to use in Adam optimiser')
@@ -89,7 +90,7 @@ FLAGS = flags.FLAGS
 def setup_train_directories():
   
   # Set log directory
-  date_stamp = datetime.now().strftime('%Y%m%d')
+  date_stamp = datetime.now().strftime('%Y%m%d_%H:%M:%S')
   save_dir = os.path.join(tf.app.flags.FLAGS.storage, 'logs/',
               tf.app.flags.FLAGS.dataset)
   train_dir = '{}/{}_{}/train'.format(save_dir, date_stamp, FLAGS.name)
@@ -116,7 +117,7 @@ def setup_train_directories():
 # SETUP LOGGER
 #------------------------------------------------------------------------------
 def setup_logger(logger_dir, name="logger"):
-  os.environ['TZ'] = 'Africa/Johannesburg'
+  os.environ['TZ'] = 'US/Eastern'
   time.tzset()
   daiquiri_formatter = daiquiri.formatter.ColorFormatter(
       fmt= "%(asctime)s %(color)s%(levelname)s: %(message)s%(color_stop)s",
