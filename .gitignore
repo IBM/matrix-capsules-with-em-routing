@@ -1,3 +1,9 @@
+# SLURM submissions
+slurm*.sh
+slurm*.out
+slurm*.err
+start_tensorboard_screen_session.sh
+
 # environment settings
 capsenv*.yml
 requirements.txt
