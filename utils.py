@@ -146,19 +146,25 @@ def compute_votes(poses_i, o, regularizer, tag=False):
                             mean=0.0, 
                             stddev=1.0), #1.0
                           regularizer=regularizer)
+  b = slim.model_variable('b', shape=[1, kh_kw_i, o, 4, 4], 
+                          dtype=tf.float32, 
+                          initializer=tf.zeros_initializer(),
+                          regularizer=regularizer)
   
   # (1, 9*8, 32, 4, 4) -> (64*5*5, 9*8, 32, 4, 4)
   w = tf.tile(w, [batch_size, 1, 1, 1, 1])
-  
+  b = tf.tile(b, [batch_size, 1, 1, 1, 1])
+
   # (64*5*5, 9*8, 1, 4, 4) -> (64*5*5, 9*8, 32, 4, 4)
   output = tf.tile(output, [1, 1, o, 1, 1])
   
   # (64*5*5, 9*8, 32, 4, 4) x (64*5*5, 9*8, 32, 4, 4) 
   # -> (64*5*5, 9*8, 32, 4, 4)
   mult = tf.matmul(output, w)
+  summ = tf.add(mult, b)
   
   # (64*5*5, 9*8, 32, 4, 4) -> (64*5*5, 9*8, 32, 16)
-  votes = tf.reshape(mult, [batch_size, kh_kw_i, o, 16])
+  votes = tf.reshape(summ, [batch_size, kh_kw_i, o, 16])
   
   # tf.summary.histogram('w', w) 
 
