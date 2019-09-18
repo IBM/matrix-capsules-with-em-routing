@@ -26,7 +26,7 @@ flags.DEFINE_string('f', '', 'kernel')
 #------------------------------------------------------------------------------
 # set to 64 according to authors (https://openreview.net/forum?id=HJWLfGWRb)
 flags.DEFINE_integer('batch_size', 64, 'batch size in total across all gpus') 
-flags.DEFINE_integer('epoch', 30, 'epoch')
+flags.DEFINE_integer('epoch', 300, 'epoch')
 flags.DEFINE_integer('iter_routing', 2, 'number of iterations')
 flags.DEFINE_integer('num_gpus', 1, 'number of GPUs')
 flags.DEFINE_float('epsilon', 1e-9, 'epsilon')
