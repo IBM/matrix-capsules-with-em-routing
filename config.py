@@ -90,7 +90,7 @@ FLAGS = flags.FLAGS
 def setup_train_directories():
   
   # Set log directory
-  date_stamp = datetime.now().strftime('%Y%m%d_%H:%M:%S')
+  date_stamp = datetime.now().strftime('%Y%m%d_%H:%M:%S:%f')
   save_dir = os.path.join(tf.app.flags.FLAGS.storage, 'logs/',
               tf.app.flags.FLAGS.dataset, tf.app.flags.FLAGS.logdir)
   train_dir = '{}/{}_{}/train'.format(save_dir, date_stamp, FLAGS.name)
