@@ -331,34 +331,17 @@ def m_step(rr, votes, activations_i, beta_v, beta_a, inverse_temperature):
                     rr_prime_sum + FLAGS.epsilon, 
                     name="mean_j")
     
-    #----- PD 16/09/2019 START -----#
-    # calculates variance using mean of j squared, yields same results
-    # but faster by a minuscle amount
-    mean_j_squared = tf.square(mean_j, name="mean_j_squared")
-    
-    votes_squared = tf.square(votes, name="votes_squared")
-    mean_jsquared_numerator = tf.reduce_sum(rr_prime * votes_squared,
-                                            axis=-3,
-                                            keepdims=True,
-                                            name="mean_jsquared_numerator")
-    mean_jsquared = tf.div(mean_jsquared_numerator,
-                           rr_prime_sum + FLAGS.epsilon,
-                           name="mean_jsquared")
-
-    var_j = tf.subtract(mean_jsquared, mean_j_squared, name="var_j")
-    ###################
-
     #----- AG 26/06/2018 START -----#
     # Use variance instead of standard deviation, because the sqrt seems to 
     # cause NaN gradients during backprop.
     # See original implementation from Suofei below
-    #var_j_numerator = tf.reduce_sum(rr_prime * tf.square(votes - mean_j), 
-                                    #axis=-3, 
-                                    #keepdims=True, 
-                                    #name="var_j_numerator")
-    #var_j = tf.div(var_j_numerator, 
-                   #rr_prime_sum + FLAGS.epsilon, 
-                   #name="var_j")
+    var_j_numerator = tf.reduce_sum(rr_prime * tf.square(votes - mean_j), 
+                                    axis=-3, 
+                                    keepdims=True, 
+                                    name="var_j_numerator")
+    var_j = tf.div(var_j_numerator, 
+                   rr_prime_sum + FLAGS.epsilon, 
+                   name="var_j")
     
     # Set the minimum variance (note: variance should always be positive)
     # This should allow me to remove the FLAGS.epsilon safety from log and div 
