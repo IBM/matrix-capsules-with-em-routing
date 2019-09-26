@@ -52,6 +52,7 @@ dependencies:
   - tensorflow-base=1.14.0=gpu_py36h8d69cac_0
   - tensorflow-estimator=1.14.0=py_0
   - tensorflow-gpu=1.14.0=h0d30ee6_0
+  - tensorflow-datasets=1.2.0=py36_0
   - termcolor=1.1.0=py36_1
   - tk=8.6.8=hbc83047_0
   - werkzeug=0.15.4=py_0
