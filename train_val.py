@@ -215,114 +215,114 @@ def main(args):
     # Set summary op
     trn_summary = tf.summary.merge_all()
     
-  
-  #----------------------------------------------------------------------------
-  # GRAPH - VALIDATION
-  #----------------------------------------------------------------------------
-  logger.info('BUILD VALIDATION GRAPH')
-  g_val = tf.Graph()
-  with g_val.as_default():
-    # Get global_step
-    global_step = tf.train.get_or_create_global_step()
+  if dataset_size_val > 0: 
+    #----------------------------------------------------------------------------
+    # GRAPH - VALIDATION
+    #----------------------------------------------------------------------------
+    logger.info('BUILD VALIDATION GRAPH')
+    g_val = tf.Graph()
+    with g_val.as_default():
+      # Get global_step
+      global_step = tf.train.get_or_create_global_step()
 
-    num_batches_val = int(dataset_size_val / FLAGS.batch_size * FLAGS.val_prop)
-    
-    # Get data
-    input_dict = create_inputs_val()
-    batch_x = input_dict['image']
-    batch_labels = input_dict['label']
-    
-    # AG 10/12/2018: Split batch for multi gpu implementation
-    # Each split is of size FLAGS.batch_size / FLAGS.num_gpus
-    # See: https://github.com/naturomics/CapsNet-
-    # Tensorflow/blob/master/dist_version/distributed_train.py
-    splits_x = tf.split(
-        axis=0, 
-        num_or_size_splits=FLAGS.num_gpus, 
-        value=batch_x)
-    splits_labels = tf.split(
-        axis=0, 
-        num_or_size_splits=FLAGS.num_gpus, 
-        value=batch_labels)
-    
-    
-    #--------------------------------------------------------------------------
-    # MULTI GPU - VALIDATE
-    #--------------------------------------------------------------------------
-    # Calculate the logits for each model tower
-    tower_logits = []
-    reuse_variables = None
-    for i in range(FLAGS.num_gpus):
-      with tf.device('/gpu:%d' % i):
-        with tf.name_scope('tower_%d' % i) as scope:
-          with slim.arg_scope([slim.variable], device='/cpu:0'):
-            loss, logits = tower_fn(
-                build_arch, 
-                splits_x[i], 
-                splits_labels[i], 
-                scope, 
-                num_classes, 
-                reuse_variables=reuse_variables, 
-                is_train=False)
+      num_batches_val = int(dataset_size_val / FLAGS.batch_size * FLAGS.val_prop)
+      
+      # Get data
+      input_dict = create_inputs_val()
+      batch_x = input_dict['image']
+      batch_labels = input_dict['label']
+      
+      # AG 10/12/2018: Split batch for multi gpu implementation
+      # Each split is of size FLAGS.batch_size / FLAGS.num_gpus
+      # See: https://github.com/naturomics/CapsNet-
+      # Tensorflow/blob/master/dist_version/distributed_train.py
+      splits_x = tf.split(
+          axis=0, 
+          num_or_size_splits=FLAGS.num_gpus, 
+          value=batch_x)
+      splits_labels = tf.split(
+          axis=0, 
+          num_or_size_splits=FLAGS.num_gpus, 
+          value=batch_labels)
+      
+      
+      #--------------------------------------------------------------------------
+      # MULTI GPU - VALIDATE
+      #--------------------------------------------------------------------------
+      # Calculate the logits for each model tower
+      tower_logits = []
+      reuse_variables = None
+      for i in range(FLAGS.num_gpus):
+        with tf.device('/gpu:%d' % i):
+          with tf.name_scope('tower_%d' % i) as scope:
+            with slim.arg_scope([slim.variable], device='/cpu:0'):
+              loss, logits = tower_fn(
+                  build_arch, 
+                  splits_x[i], 
+                  splits_labels[i], 
+                  scope, 
+                  num_classes, 
+                  reuse_variables=reuse_variables, 
+                  is_train=False)
 
-          # Don't reuse variable for first GPU, but do reuse for others
-          reuse_variables = True
-          
-          # Keep track of losses and logits across for each tower
-          tower_logits.append(logits)
-          
-          # Loss for each tower
-          tf.summary.histogram("val_logits", logits)
-    
-    # Combine logits from all towers
-    logits = tf.concat(tower_logits, axis=0)
-    
-    # Calculate metrics
-    val_loss = mod.spread_loss(logits, batch_labels)
-    val_acc = met.accuracy(logits, batch_labels)
-    
-    # Prepare predictions and one-hot labels
-    val_probs = tf.nn.softmax(logits=logits)
-    val_labels_oh = tf.one_hot(batch_labels, num_classes)
-    
-    # Group metrics together
-    # See: https://cs230-stanford.github.io/tensorflow-model.html
-    val_metrics = {'loss' : val_loss,
-                   'labels' : batch_labels, 
-                   'labels_oh' : val_labels_oh,
-                   'logits' : logits,
-                   'probs' : val_probs,
-                   'acc' : val_acc,
-                   }
-    
-    # Reset and read operations for streaming metrics go here
-    val_reset = {}
-    val_read = {}
-    
-    tf.summary.scalar("val_loss", val_loss)
-    tf.summary.scalar("val_acc", val_acc)
+            # Don't reuse variable for first GPU, but do reuse for others
+            reuse_variables = True
+            
+            # Keep track of losses and logits across for each tower
+            tower_logits.append(logits)
+            
+            # Loss for each tower
+            tf.summary.histogram("val_logits", logits)
       
-    # Saver
-    saver = tf.train.Saver(max_to_keep=None)
-    
-    # Set summary op
-    val_summary = tf.summary.merge_all()
-     
+      # Combine logits from all towers
+      logits = tf.concat(tower_logits, axis=0)
       
+      # Calculate metrics
+      val_loss = mod.spread_loss(logits, batch_labels)
+      val_acc = met.accuracy(logits, batch_labels)
+      
+      # Prepare predictions and one-hot labels
+      val_probs = tf.nn.softmax(logits=logits)
+      val_labels_oh = tf.one_hot(batch_labels, num_classes)
+      
+      # Group metrics together
+      # See: https://cs230-stanford.github.io/tensorflow-model.html
+      val_metrics = {'loss' : val_loss,
+                     'labels' : batch_labels, 
+                     'labels_oh' : val_labels_oh,
+                     'logits' : logits,
+                     'probs' : val_probs,
+                     'acc' : val_acc,
+                     }
+      
+      # Reset and read operations for streaming metrics go here
+      val_reset = {}
+      val_read = {}
+      
+      tf.summary.scalar("val_loss", val_loss)
+      tf.summary.scalar("val_acc", val_acc)
+        
+      # Saver
+      saver = tf.train.Saver(max_to_keep=None)
+      
+      # Set summary op
+      val_summary = tf.summary.merge_all()
+       
+        
   #****************************************************************************
   # 2. SESSIONS
   #****************************************************************************
           
   #----- SESSION TRAIN -----#
   # Session settings
-  sess_train = tf.Session(config=tf.ConfigProto(allow_soft_placement=True,
-                                                log_device_placement=False),
-                          graph=g_train)
+  #sess_train = tf.Session(config=tf.ConfigProto(allow_soft_placement=True,
+  #                                              log_device_placement=False),
+  #                        graph=g_train)
 
   # Perry: added in for RTX 2070 incompatibility workaround
-  #config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
-  #config.gpu_options.allow_growth = True
-  #sess_train = tf.Session(config=config, graph=g_train)
+  config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
+  config.gpu_options.allow_growth = True
+  sess_train = tf.Session(config=config, graph=g_train)
 
   # Debugger
   # AG 05/06/2018: Debugging using either command line or TensorBoard
@@ -346,14 +346,21 @@ def main(args):
   summary_writer = tf.summary.FileWriter(train_summary_dir, 
                                          graph=sess_train.graph)
 
-  
-  #----- SESSION VALIDATION -----#
-  sess_val = tf.Session(config=tf.ConfigProto(allow_soft_placement=True,
-                                              log_device_placement=False),
-                        graph=g_val)
-  with g_val.as_default():
-    sess_val.run([tf.local_variables_initializer(), 
-                  tf.global_variables_initializer()])
+  if dataset_size_val > 0:
+    #----- SESSION VALIDATION -----#
+    #sess_val = tf.Session(config=tf.ConfigProto(allow_soft_placement=True,
+    #                                            log_device_placement=False),
+    #                      graph=g_val)
+ 
+    # Perry: added in for RTX 2070 incompatibility workaround
+    config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
+    config.gpu_options.allow_growth = True
+    sess_val = tf.Session(config=config, graph=g_val)
+
+
+    with g_val.as_default():
+      sess_val.run([tf.local_variables_initializer(), 
+                    tf.global_variables_initializer()])
 
 
   #****************************************************************************
@@ -446,57 +453,57 @@ def main(args):
           # Save ckpt from train session
           ckpt_path = os.path.join(train_checkpoint_dir, 'model.ckpt')
           saver.save(sess_train, ckpt_path, global_step=step)
-      
-      # VALIDATE MODEL
-      if (step % VAL_FREQ) == 0:
-        #----- Validation -----#
-        with g_val.as_default():
-          logger.info("Start Validation")
-          
-          # Restore ckpt to val session
-          latest_ckpt = tf.train.latest_checkpoint(train_checkpoint_dir)
-          saver.restore(sess_val, latest_ckpt)
-          
-          # Reset accumulators
-          accuracy_sum = 0
-          loss_sum = 0
-          sess_val.run(val_reset)
-          
-          for i in range(num_batches_val):
-            val_metrics_v, val_summary_str_v = sess_val.run(
-                [val_metrics, val_summary])
-             
-            # Update
-            accuracy_sum += val_metrics_v['acc']
-            loss_sum += val_metrics_v['loss']
+      if dataset_size_val > 0: 
+        # VALIDATE MODEL
+        if (step % VAL_FREQ) == 0:
+          #----- Validation -----#
+          with g_val.as_default():
+            logger.info("Start Validation")
             
-            # Read
-            val_read_v = sess_val.run(val_read)
+            # Restore ckpt to val session
+            latest_ckpt = tf.train.latest_checkpoint(train_checkpoint_dir)
+            saver.restore(sess_val, latest_ckpt)
             
-            # Get checkpoint number
-            ckpt_num = re.split('-', latest_ckpt)[-1]
+            # Reset accumulators
+            accuracy_sum = 0
+            loss_sum = 0
+            sess_val.run(val_reset)
+            
+            for i in range(num_batches_val):
+              val_metrics_v, val_summary_str_v = sess_val.run(
+                  [val_metrics, val_summary])
+               
+              # Update
+              accuracy_sum += val_metrics_v['acc']
+              loss_sum += val_metrics_v['loss']
+              
+              # Read
+              val_read_v = sess_val.run(val_read)
+              
+              # Get checkpoint number
+              ckpt_num = re.split('-', latest_ckpt)[-1]
 
-            # Logging
+              # Logging
+              logger.info('VAL ckpt-{}'.format(ckpt_num) 
+                          + ' bch-{:d}'.format(i) 
+                          + ' cum_acc: {:.2f}%'.format(accuracy_sum/(i+1)*100) 
+                          + ' cum_loss: {:.4f}'.format(loss_sum/(i+1))
+                         )
+            
+            # Average across batches
+            ave_acc = accuracy_sum / num_batches_val
+            ave_loss = loss_sum / num_batches_val
+             
             logger.info('VAL ckpt-{}'.format(ckpt_num) 
-                        + ' bch-{:d}'.format(i) 
-                        + ' cum_acc: {:.2f}%'.format(accuracy_sum/(i+1)*100) 
-                        + ' cum_loss: {:.4f}'.format(loss_sum/(i+1))
+                        + ' avg_acc: {:.2f}%'.format(ave_acc*100) 
+                        + ' avg_loss: {:.4f}'.format(ave_loss)
                        )
-          
-          # Average across batches
-          ave_acc = accuracy_sum / num_batches_val
-          ave_loss = loss_sum / num_batches_val
-           
-          logger.info('VAL ckpt-{}'.format(ckpt_num) 
-                      + ' avg_acc: {:.2f}%'.format(ave_acc*100) 
-                      + ' avg_loss: {:.4f}'.format(ave_loss)
-                     )
-          
-          logger.info("Write Val Summary")
-          summary_val = tf.Summary()
-          summary_val.value.add(tag="val_acc", simple_value=ave_acc)
-          summary_val.value.add(tag="val_loss", simple_value=ave_loss)
-          summary_writer.add_summary(summary_val, step)
+            
+            logger.info("Write Val Summary")
+            summary_val = tf.Summary()
+            summary_val.value.add(tag="val_acc", simple_value=ave_acc)
+            summary_val.value.add(tag="val_loss", simple_value=ave_loss)
+            summary_writer.add_summary(summary_val, step)
           
   # Close (main loop)
   sess_train.close()

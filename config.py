@@ -179,8 +179,11 @@ def load_or_save_hyperparams(train_dir=None):
 #------------------------------------------------------------------------------
 # FACTORIES FOR DATASET
 #------------------------------------------------------------------------------
-def get_dataset_path(dataset_name: str): 
-  options = {'smallNORB': 'data/smallNORB/tfrecord'}
+def get_dataset_path(dataset_name: str):
+  # dataset does not return path if using tensorflow_datasets
+  # those are actually saved under ~/tensorflow_datasets/
+  options = {'smallNORB': 'data/smallNORB/tfrecord',
+             'mnist': ''}
   path = FLAGS.storage + options[dataset_name]
   return path
 
@@ -204,7 +207,8 @@ def get_dataset_size_test(dataset_name: str):
 
 
 def get_dataset_size_validate(dataset_name: str):
-  options = {'smallNORB': 23400 * 2}
+  options = {'smallNORB': 23400 * 2,
+             'mnist': 0}
   return options[dataset_name]
 
 
@@ -218,6 +222,7 @@ def get_num_classes(dataset_name: str):
 
 
 import data_pipeline_norb as data_norb
+import tensorflow_datasets as tfds
 def get_create_inputs(dataset_name: str, mode="train"):
   
   if mode == "train":
@@ -227,13 +232,16 @@ def get_create_inputs(dataset_name: str, mode="train"):
     
   path = get_dataset_path(dataset_name)
   
-  options = {'smallNORB': 
-         lambda: data_norb.create_inputs_norb(path, is_train)}
+  options = {'smallNORB':
+                 lambda: data_norb.create_inputs_norb(path, is_train),
+             'mnist':
+                 lambda: tfds.load(name="mnist", split=mode)}
   return options[dataset_name]
 
 
 import models as mod
 def get_dataset_architecture(dataset_name: str):
   options = {'smallNORB': mod.build_arch_smallnorb,
-             'baseline': mod.build_arch_baseline}
+             'baseline': mod.build_arch_baseline,
+             'mnist': mod.build_arch_smallnorb}
   return options[dataset_name]

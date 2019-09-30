@@ -1,3 +1,6 @@
+# local run settings
+run*.sh
+
 # SLURM submissions
 slurm*.sh
 slurm*.out
