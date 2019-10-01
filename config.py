@@ -183,7 +183,8 @@ def get_dataset_path(dataset_name: str):
   # dataset does not return path if using tensorflow_datasets
   # those are actually saved under ~/tensorflow_datasets/
   options = {'smallNORB': 'data/smallNORB/tfrecord',
-             'mnist': ''}
+             'mnist': '',
+             'cifar10': ''}
   path = FLAGS.storage + options[dataset_name]
   return path
 
@@ -207,8 +208,11 @@ def get_dataset_size_test(dataset_name: str):
 
 
 def get_dataset_size_validate(dataset_name: str):
-  options = {'smallNORB': 23400 * 2,
-             'mnist': 0}
+  if dataset_name is 'smallNORB' or dataset_name is 'mnist':
+    print("%s pipeline is not set up for validation, using test set for validation instead")
+  options = {'smallNORB': get_dataset_size_test(dataset_name),
+             'mnist': get_dataset_size_test(dataset_name),
+             'cifar10': get_dataset_size_test(dataset_name)}
   return options[dataset_name]
 
 
@@ -221,13 +225,15 @@ def get_num_classes(dataset_name: str):
   return options[dataset_name]
 
 
-import data_pipeline_norb as data_norb
-import tensorflow_datasets as tfds
+from data_pipelines import norb as data_norb
+from data_pipelines import mnist as data_mnist
+from data_pipelines import cifar10 as data_cifar10
 def get_create_inputs(dataset_name: str, mode="train"):
   
   if mode == "train":
     is_train = True
   else:
+    # for dataset pipelines that don't have validation set up
     is_train = False
     
   path = get_dataset_path(dataset_name)
@@ -235,7 +241,9 @@ def get_create_inputs(dataset_name: str, mode="train"):
   options = {'smallNORB':
                  lambda: data_norb.create_inputs_norb(path, is_train),
              'mnist':
-                 lambda: tfds.load(name="mnist", split=mode)}
+                 lambda: data_mnist.create_inputs(is_train),
+             'cifar10':
+                 lambda: data_cifar10.create_inputs(is_train)}
   return options[dataset_name]
 
 
@@ -243,5 +251,6 @@ import models as mod
 def get_dataset_architecture(dataset_name: str):
   options = {'smallNORB': mod.build_arch_smallnorb,
              'baseline': mod.build_arch_baseline,
-             'mnist': mod.build_arch_smallnorb}
+             'mnist': mod.build_arch_smallnorb,
+             'cifar10': mod.build_arch_smallnorb}
   return options[dataset_name]

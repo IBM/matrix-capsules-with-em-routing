@@ -158,7 +158,7 @@ def input_fn(path, is_train: bool):
   
   # 2. map with the actual work (preprocessing, augmentation…) using multiple 
   # parallel calls
-  dataset = dataset.map(_parser, num_parallel_calls=4)
+  dataset = dataset.map(_parser, num_parallel_calls=FLAGS.num_threads)
   if is_train:
     dataset = dataset.map(_train_preprocess, 
                           num_parallel_calls=FLAGS.num_threads)

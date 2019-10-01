@@ -23,11 +23,11 @@ logger = daiquiri.getLogger(__name__)
 #------------------------------------------------------------------------------
 # CAPSNET FOR SMALLNORB
 #------------------------------------------------------------------------------
-def build_arch_smallnorb(input, is_train: bool, num_classes: int):
+def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
   
-  logger.info('input shape: {}'.format(input.get_shape()))
-  batch_size = int(input.get_shape()[0])
-  spatial_size = int(input.get_shape()[1])
+  logger.info('input shape: {}'.format(inp.get_shape()))
+  batch_size = int(inp.get_shape()[0])
+  spatial_size = int(inp.get_shape()[1])
 
   # xavier initialization is necessary here to provide higher stability
   # initializer = tf.truncated_normal_initializer(mean=0.0, stddev=0.01)
@@ -51,7 +51,7 @@ def build_arch_smallnorb(input, is_train: bool, num_classes: int):
     
     #----- Batch Norm -----#
     output = slim.batch_norm(
-        input, 
+        inp,
         center=False, 
         is_training=is_train, 
         trainable=is_train)

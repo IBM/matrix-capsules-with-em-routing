@@ -65,7 +65,8 @@ def main(args):
   build_arch      = conf.get_dataset_architecture(FLAGS.dataset)
   num_classes     = conf.get_num_classes(FLAGS.dataset)
   create_inputs_train = conf.get_create_inputs(FLAGS.dataset, mode="train")
-  create_inputs_val   = conf.get_create_inputs(FLAGS.dataset, mode="validate")
+  if dataset_size_val > 0:
+    create_inputs_val   = conf.get_create_inputs(FLAGS.dataset, mode="validate")
 
   
  #*****************************************************************************
