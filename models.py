@@ -132,8 +132,9 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
         kernel = 3, 
         stride = 1, 
         ncaps_out = FLAGS.D, 
-        name = 'lyr.conv_caps2', 
-        weights_regularizer = weights_regularizer)
+        name = 'lyr.conv_caps2',
+        weights_regularizer = weights_regularizer,
+        drop_rate = FLAGS.drop_rate)
     
     #----- Class Caps -----#
     # activation_in: (64, 5, 5, 32, 1)

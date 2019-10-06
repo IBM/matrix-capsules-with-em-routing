@@ -21,7 +21,8 @@ def conv_caps(activation_in,
               stride, 
               ncaps_out, 
               name='conv_caps', 
-              weights_regularizer=None):
+              weights_regularizer=None,
+              drop_rate=0):
   """Convolutional capsule layer.
   
   "The routing procedure is used between each adjacent pair of capsule layers. 
@@ -111,7 +112,8 @@ def conv_caps(activation_in,
       pose_out, activation_out = em.em_routing(votes, 
                            activation_unroll, 
                            batch_size, 
-                           spatial_routing_matrix)
+                           spatial_routing_matrix,
+                           drop_rate)
   
     logger.info(name + ' pose_out shape: {}'.format(pose_out.get_shape()))
     logger.info(name + ' activation_out shape: {}'
@@ -123,10 +125,11 @@ def conv_caps(activation_in,
 
 
 def fc_caps(activation_in, 
-            pose_in, 
+            pose_in,
             ncaps_out, 
             name='class_caps', 
-            weights_regularizer=None):
+            weights_regularizer=None,
+            drop_rate=0):
   """Fully connected capsule layer.
   
   "The last layer of convolutional capsules is connected to the final capsule 
@@ -219,7 +222,8 @@ def fc_caps(activation_in,
       pose_out, activation_out = em.em_routing(votes_flat, 
                            activation_flat, 
                            batch_size, 
-                           spatial_routing_matrix)
+                           spatial_routing_matrix,
+                           drop_rate)
 
     activation_out = tf.squeeze(activation_out, name="activation_out")
     pose_out = tf.squeeze(pose_out, name="pose_out")

@@ -30,7 +30,7 @@ import daiquiri
 logger = daiquiri.getLogger(__name__)
 
 
-def em_routing(votes_ij, activations_i, batch_size, spatial_routing_matrix):
+def em_routing(votes_ij, activations_i, batch_size, spatial_routing_matrix, drop_rate=0):
   """The EM routing between input capsules (i) and output capsules (j).
   
   See Hinton et al. "Matrix Capsules with EM Routing" for detailed description 
@@ -231,7 +231,11 @@ def em_routing(votes_ij, activations_i, batch_size, spatial_routing_matrix):
     # activation: (N, OH, OW, o, 1) via squeeze o_activation is 
     # [24, 6, 6, 32, 1]
     activations_j = tf.squeeze(activations_j, axis=-3, name="activations")
-
+    if drop_rate != 0:
+      logits = np.log(np.asarray([[drop_rate, 1 - drop_rate]]))
+      mask = tf.cast(tf.random.categorical(logits, tf.size(activations_j)), tf.float32)
+      mask = tf.reshape(mask, tf.shape(activations_j))
+      activations_j = tf.multiply(mask, activations_j)
   return poses_j, activations_j
 
 
