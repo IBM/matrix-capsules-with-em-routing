@@ -43,6 +43,9 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
   # https://openreview.net/forum?id=HJWLfGWRb&noteId=rJeQnSsE3X
   weights_regularizer = tf.contrib.layers.l2_regularizer(0.0000002)
 
+  # for drop connect during em routing
+  drop_rate = FLAGS.drop_rate if is_train else 0
+
   # weights_initializer=initializer,
   with slim.arg_scope([slim.conv2d], 
     trainable = is_train, 
@@ -106,7 +109,7 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
                   .format(activation.get_shape()))
       
       tf.summary.histogram("activation", activation)
-    
+       
     #----- Conv Caps 1 -----#
     # activation_in: (64, 7, 7, 8, 1) 
     # pose_in: (64, 7, 7, 16, 16) 
@@ -134,7 +137,7 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
         ncaps_out = FLAGS.D, 
         name = 'lyr.conv_caps2',
         weights_regularizer = weights_regularizer,
-        drop_rate = FLAGS.drop_rate)
+        drop_rate = drop_rate)
     
     #----- Class Caps -----#
     # activation_in: (64, 5, 5, 32, 1)
