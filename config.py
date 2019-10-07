@@ -28,7 +28,6 @@ flags.DEFINE_string('f', '', 'kernel')
 flags.DEFINE_integer('batch_size', 64, 'batch size in total across all gpus') 
 flags.DEFINE_integer('epoch', 100, 'epoch')
 flags.DEFINE_integer('iter_routing', 2, 'number of iterations')
-flags.DEFINE_integer('num_gpus', 1, 'number of GPUs')
 flags.DEFINE_float('epsilon', 1e-9, 'epsilon')
 flags.DEFINE_float('lrn_rate', 3e-3, 'learning rate to use in Adam optimiser')
 flags.DEFINE_float('val_prop', 0.1, 
@@ -36,17 +35,17 @@ flags.DEFINE_float('val_prop', 0.1,
 flags.DEFINE_boolean('weight_reg', False, 
                      'train with regularization of weights')
 flags.DEFINE_string('norm', 'norm2', 'norm type')
-flags.DEFINE_integer('num_threads', 8, 
-                     'number of parallel calls in the input pipeline')
-flags.DEFINE_string('dataset', 'smallNORB', 
-                    '''dataset name: currently only "smallNORB" supported, feel
-                    free to add your own''')
 flags.DEFINE_float('final_lambda', 0.01, 'final lambda in EM routing')
+flags.DEFINE_boolean('affine_voting', True, '''whether to use affine instead
+                     of linear transformations to calculate votes''')
 flags.DEFINE_float('drop_rate', 0.5, 'proportion of routes dropped')
 
 #------------------------------------------------------------------------------
 # ARCHITECTURE PARAMETERS
 #------------------------------------------------------------------------------
+flags.DEFINE_string('dataset', 'smallNORB',
+                    '''dataset name: currently only "smallNORB, mnist, and
+                    cifar10" supported, feel free to add your own''')
 flags.DEFINE_integer('A', 64, 'number of channels in output from ReLU Conv1')
 flags.DEFINE_integer('B', 8, 'number of capsules in output from PrimaryCaps')
 flags.DEFINE_integer('C', 16, 'number of channels in output from ConvCaps1')
@@ -56,6 +55,9 @@ flags.DEFINE_integer('D', 16, 'number of channels in output from ConvCaps2')
 #------------------------------------------------------------------------------
 # ENVIRONMENT SETTINGS
 #------------------------------------------------------------------------------
+flags.DEFINE_integer('num_gpus', 1, 'number of GPUs')
+flags.DEFINE_integer('num_threads', 8, 
+                     'number of parallel calls in the input pipeline')
 flags.DEFINE_string('mode', 'train', 'train, validate, or test')
 flags.DEFINE_string('name', '', 'name of experiment in log directory')
 flags.DEFINE_boolean('reset', False, 'clear the train or test log directory')

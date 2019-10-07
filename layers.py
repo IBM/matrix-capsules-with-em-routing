@@ -22,7 +22,8 @@ def conv_caps(activation_in,
               ncaps_out, 
               name='conv_caps', 
               weights_regularizer=None,
-              drop_rate=0):
+              drop_rate=0,
+              affine_voting=True):
   """Convolutional capsule layer.
   
   "The routing procedure is used between each adjacent pair of capsule layers. 
@@ -101,7 +102,8 @@ def conv_caps(activation_in,
           pose_unroll, 
           parent_caps, 
           weights_regularizer, 
-          tag=True)
+          tag=True,
+          affine_voting=affine_voting)
       logger.info(name + ' votes shape: {}'.format(votes.get_shape()))
 
     with tf.variable_scope('routing') as scope:
@@ -129,7 +131,8 @@ def fc_caps(activation_in,
             ncaps_out, 
             name='class_caps', 
             weights_regularizer=None,
-            drop_rate=0):
+            drop_rate=0,
+            affine_voting=True):
   """Fully connected capsule layer.
   
   "The last layer of convolutional capsules is connected to the final capsule 
@@ -185,7 +188,8 @@ def fc_caps(activation_in,
           name="activation")
 
       # (64*5*5, 32, 16) -> (65*5*5, 32, 5, 16)
-      votes = utl.compute_votes(pose, ncaps_out, weights_regularizer)
+      votes = utl.compute_votes(pose, ncaps_out, weights_regularizer,
+                                affine_voting=affine_voting)
 
       # (65*5*5, 32, 5, 16)
       assert (
