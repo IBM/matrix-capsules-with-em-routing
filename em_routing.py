@@ -198,7 +198,7 @@ def em_routing(votes_ij, activations_i, batch_size, spatial_routing_matrix, drop
       dropconnect_mask = tf.cast(tf.random.categorical(logits,
                                  tf.size(rr)),
                                  tf.float32)
-      dropconnect_mask = tf.reshape(dropconnect_mask, tf.shape(activations_j))
+      dropconnect_mask = tf.reshape(dropconnect_mask, tf.shape(rr))
       rr = tf.multiply(dropconnect_mask, rr)
  
     for it in range(FLAGS.iter_routing):  

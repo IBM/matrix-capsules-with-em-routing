@@ -133,6 +133,8 @@ def compute_votes(poses_i, o, regularizer, affine_voting=True, tag=False,
       (N*OH*OW, kh*kw*i, o, 16)
       (64*5*5, 3*3*8, 32, 16)
   """
+  batch_size = int(poses_i.get_shape()[0]) # 64*5*5
+  kh_kw_i = int(poses_i.get_shape()[1]) # 3*3*8
   if share_kernel_weights_by_children_class is True:
     assert kernel_size is not None
     assert kh_kw_i % kernel_size == 0
@@ -141,8 +143,6 @@ def compute_votes(poses_i, o, regularizer, affine_voting=True, tag=False,
   else:
     kernel_weights_dim = [1, kh_kw_i, o, 4 ,4]
     tile_coefficients = [batch_size, 1, 1, 1, 1]
-  batch_size = int(poses_i.get_shape()[0]) # 64*5*5
-  kh_kw_i = int(poses_i.get_shape()[1]) # 3*3*8
   
   # (64*5*5, 9*8, 16) -> (64*5*5, 9*8, 1, 4, 4)
   inp = tf.reshape(poses_i, shape=[batch_size, kh_kw_i, 1, 4, 4])
@@ -168,7 +168,7 @@ def compute_votes(poses_i, o, regularizer, affine_voting=True, tag=False,
   # -> (64*5*5, 9*8, 32, 4, 4)
   votes = tf.matmul(inp, w)
   if affine_voting is True:
-    b = slim.model_variable('b', shape=kernel_weights_dim), 
+    b = slim.model_variable('b', shape=kernel_weights_dim, 
                             dtype=tf.float32, 
                             initializer=tf.zeros_initializer(),
                             regularizer=regularizer)

@@ -136,8 +136,8 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
         name = 'lyr.conv_caps2',
         weights_regularizer = weights_regularizer,
         drop_rate = FLAGS.drop_rate,
-        drop_out = FLAGS.drop_out,
-        drop_connect = FLAGS.dropconnect,
+        dropout = FLAGS.dropout,
+        dropconnect = FLAGS.dropconnect,
         affine_voting = FLAGS.affine_voting)
     
     #----- Class Caps -----#
@@ -152,8 +152,8 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
         name = 'class_caps',
         weights_regularizer = weights_regularizer,
         drop_rate = FLAGS.drop_rate,
-        drop_out = False,
-        drop_connect = FLAGS.dropconnect,
+        dropout = False,
+        dropconnect = FLAGS.dropconnect,
         affine_voting = FLAGS.affine_voting)
     
   return {'scores': activation_out, 'pose_out': pose_out}
