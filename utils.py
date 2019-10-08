@@ -44,7 +44,7 @@ def create_routing_map(child_space, k, s):
   return binmap
 
 
-def kernel_tile(input, kernel, stride):
+def kernel_tile(inpu, kernel, stride):
   """Tile the children poses/activations so that the children for each parent occur in one axis.
   
   Author:
@@ -67,7 +67,7 @@ def kernel_tile(input, kernel, stride):
       (7*7, 5*5)
   """
   
-  input_shape = input.get_shape()
+  input_shape = inpu.get_shape()
   batch_size   = int(input_shape[0])
   spatial_size = int(input_shape[1])
   n_capsules   = int(input_shape[3])
@@ -95,10 +95,10 @@ def kernel_tile(input, kernel, stride):
   child_to_parent_idx = group_children_by_parent(child_parent_matrix)
   
   # Spread out spatial dimension of children
-  input = tf.reshape(input, [batch_size, spatial_size*spatial_size, -1])
+  inpu = tf.reshape(inpu, [batch_size, spatial_size*spatial_size, -1])
   
   # Select which children go to each parent capsule
-  tiled = tf.gather(input, child_to_parent_idx, axis=1)
+  tiled = tf.gather(inpu, child_to_parent_idx, axis=1)
   
   tiled = tf.squeeze(tiled)
   tiled = tf.reshape(tiled, [batch_size, parent_spatial_size, parent_spatial_size, kernel*kernel, n_capsules, -1])
@@ -106,7 +106,8 @@ def kernel_tile(input, kernel, stride):
   return tiled, child_parent_matrix
 
 
-def compute_votes(poses_i, o, regularizer, affine_voting=True, tag=False):
+def compute_votes(poses_i, o, regularizer, affine_voting=True, tag=False,
+                  share_kernel_weights_by_children_class=False, kernel_size=None):
   """Compute the votes by multiplying input poses by transformation matrix.
   
   Multiply the poses of layer i by the transform matrix to compute the votes for 
@@ -123,48 +124,55 @@ def compute_votes(poses_i, o, regularizer, affine_voting=True, tag=False):
     poses_i: 
       poses in layer i tiled according to the kernel
       (N*OH*OW, kh*kw*i, 16)
-      (64*5*5, 9*8, 16) 
+      (64*5*5, 3*3*8, 16) 
     o: number of output capsules, also called "parent_caps"
     regularizer:    
     
   Returns:
     votes: 
       (N*OH*OW, kh*kw*i, o, 16)
-      (64*5*5, 9*8, 32, 16)
+      (64*5*5, 3*3*8, 32, 16)
   """
-  
+  if share_kernel_weights_by_children_class is True:
+    assert kernel_size is not None
+    assert kh_kw_i % kernel_size == 0
+    kernel_weights_dim = [1, kh_kw_i // kernel_size, o, 4, 4]
+    tile_coefficients = [batch_size, kernel_size, 1, 1, 1]
+  else:
+    kernel_weights_dim = [1, kh_kw_i, o, 4 ,4]
+    tile_coefficients = [batch_size, 1, 1, 1, 1]
   batch_size = int(poses_i.get_shape()[0]) # 64*5*5
-  kh_kw_i = int(poses_i.get_shape()[1]) # 9*8
+  kh_kw_i = int(poses_i.get_shape()[1]) # 3*3*8
   
   # (64*5*5, 9*8, 16) -> (64*5*5, 9*8, 1, 4, 4)
-  output = tf.reshape(poses_i, shape=[batch_size, kh_kw_i, 1, 4, 4])
+  inp = tf.reshape(poses_i, shape=[batch_size, kh_kw_i, 1, 4, 4])
   
   # the output of capsule is miu, the mean of a Gaussian, and activation, the 
   # sum of probabilities it has no relationship with the absolute values of w 
   # and votes using weights with bigger stddev helps numerical stability
-  w = slim.model_variable('w', shape=[1, kh_kw_i, o, 4, 4], 
-                          dtype=tf.float32, 
+  w = slim.model_variable('w', shape=kernel_weights_dim, 
+                          dtype=tf.float32,
                           initializer=tf.truncated_normal_initializer(
-                            mean=0.0, 
+                            mean=0.0,
                             stddev=1.0), #1.0
                           regularizer=regularizer)
   
   
   # (1, 9*8, 32, 4, 4) -> (64*5*5, 9*8, 32, 4, 4)
-  w = tf.tile(w, [batch_size, 1, 1, 1, 1])
+  w = tf.tile(w, tile_coefficients)
 
   # (64*5*5, 9*8, 1, 4, 4) -> (64*5*5, 9*8, 32, 4, 4)
-  output = tf.tile(output, [1, 1, o, 1, 1])
+  inp = tf.tile(inp, [1, 1, o, 1, 1])
   
   # (64*5*5, 9*8, 32, 4, 4) x (64*5*5, 9*8, 32, 4, 4) 
   # -> (64*5*5, 9*8, 32, 4, 4)
-  votes = tf.matmul(output, w)
+  votes = tf.matmul(inp, w)
   if affine_voting is True:
-    b = slim.model_variable('b', shape=[1, kh_kw_i, o, 4, 4], 
+    b = slim.model_variable('b', shape=kernel_weights_dim), 
                             dtype=tf.float32, 
                             initializer=tf.zeros_initializer(),
                             regularizer=regularizer)
-    b = tf.tile(b, [batch_size, 1, 1, 1, 1])
+    b = tf.tile(b, tile_coefficients)
     votes = tf.add(votes, b)
   
   # (64*5*5, 9*8, 32, 4, 4) -> (64*5*5, 9*8, 32, 16)

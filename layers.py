@@ -23,6 +23,8 @@ def conv_caps(activation_in,
               name='conv_caps', 
               weights_regularizer=None,
               drop_rate=0,
+              dropout=False,
+              dropconnect=False,
               affine_voting=True):
   """Convolutional capsule layer.
   
@@ -115,7 +117,9 @@ def conv_caps(activation_in,
                            activation_unroll, 
                            batch_size, 
                            spatial_routing_matrix,
-                           drop_rate)
+                           drop_rate,
+                           dropout,
+                           dropconnect)
   
     logger.info(name + ' pose_out shape: {}'.format(pose_out.get_shape()))
     logger.info(name + ' activation_out shape: {}'
@@ -132,6 +136,8 @@ def fc_caps(activation_in,
             name='class_caps', 
             weights_regularizer=None,
             drop_rate=0,
+            dropout=False,
+            dropconnect=False,
             affine_voting=True):
   """Fully connected capsule layer.
   
@@ -227,7 +233,9 @@ def fc_caps(activation_in,
                            activation_flat, 
                            batch_size, 
                            spatial_routing_matrix,
-                           drop_rate)
+                           drop_rate,
+                           dropout,
+                           dropconnect)
 
     activation_out = tf.squeeze(activation_out, name="activation_out")
     pose_out = tf.squeeze(pose_out, name="pose_out")

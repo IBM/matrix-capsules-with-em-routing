@@ -43,9 +43,6 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
   # https://openreview.net/forum?id=HJWLfGWRb&noteId=rJeQnSsE3X
   weights_regularizer = tf.contrib.layers.l2_regularizer(0.0000002)
 
-  # for drop connect during em routing
-  drop_rate = FLAGS.drop_rate if is_train else 0
-
   # weights_initializer=initializer,
   with slim.arg_scope([slim.conv2d], 
     trainable = is_train, 
@@ -138,7 +135,9 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
         ncaps_out = FLAGS.D, 
         name = 'lyr.conv_caps2',
         weights_regularizer = weights_regularizer,
-        drop_rate = drop_rate,
+        drop_rate = FLAGS.drop_rate,
+        drop_out = FLAGS.drop_out,
+        drop_connect = FLAGS.dropconnect,
         affine_voting = FLAGS.affine_voting)
     
     #----- Class Caps -----#
@@ -152,6 +151,9 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
         ncaps_out = num_classes,
         name = 'class_caps',
         weights_regularizer = weights_regularizer,
+        drop_rate = FLAGS.drop_rate,
+        drop_out = False,
+        drop_connect = FLAGS.dropconnect,
         affine_voting = FLAGS.affine_voting)
     
   return {'scores': activation_out, 'pose_out': pose_out}
