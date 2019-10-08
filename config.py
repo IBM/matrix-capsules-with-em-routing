@@ -39,7 +39,8 @@ flags.DEFINE_float('final_lambda', 0.01, 'final lambda in EM routing')
 flags.DEFINE_boolean('affine_voting', True, '''whether to use affine instead
                      of linear transformations to calculate votes''')
 flags.DEFINE_float('drop_rate', 0.5, 'proportion of routes dropped')
-
+flags.DEFINE_boolean('dropout', False, '''whether to apply dropout''')
+flags.DEFINE_boolean('dropconnect', False, '''whether to apply dropconnect''')
 #------------------------------------------------------------------------------
 # ARCHITECTURE PARAMETERS
 #------------------------------------------------------------------------------

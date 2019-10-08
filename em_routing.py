@@ -30,7 +30,7 @@ import daiquiri
 logger = daiquiri.getLogger(__name__)
 
 
-def em_routing(votes_ij, activations_i, batch_size, spatial_routing_matrix, drop_rate=0):
+def em_routing(votes_ij, activations_i, batch_size, spatial_routing_matrix, drop_rate=0, dropout=False, dropconnect=False):
   """The EM routing between input capsules (i) and output capsules (j).
   
   See Hinton et al. "Matrix Capsules with EM Routing" for detailed description 
@@ -77,7 +77,8 @@ def em_routing(votes_ij, activations_i, batch_size, spatial_routing_matrix, drop
       (N, OH, OW, o, 1)
       (64, 6, 6, 32, 1)
   """
-  
+  if dropout or dropconnect:
+    assert drop_rate > 0
   #----- Dimensions -----#
   
   # Get dimensions needed to do conversions
@@ -192,7 +193,14 @@ def em_routing(votes_ij, activations_i, batch_size, spatial_routing_matrix, drop
     
     # Convert rr from np to tf
     rr = tf.constant(rr, dtype=tf.float32)
-    
+    if dropconnect:
+      logits = np.log(np.asarray([[drop_rate, 1 - drop_rate]]))
+      dropconnect_mask = tf.cast(tf.random.categorical(logits,
+                                 tf.size(rr)),
+                                 tf.float32)
+      dropconnect_mask = tf.reshape(dropconnect_mask, tf.shape(rr))
+      rr = tf.multiply(dropconnect_mask, rr)
+ 
     for it in range(FLAGS.iter_routing):  
       # AG 17/09/2018: modified schedule for inverse_temperature (lambda) based
       # on Hinton's response to questions on OpenReview.net: 
@@ -208,9 +216,9 @@ def em_routing(votes_ij, activations_i, batch_size, spatial_routing_matrix, drop
 
       # AG 26/06/2018: added var_j
       activations_j, mean_j, stdv_j, var_j = m_step(
-        rr, 
-        votes_ij, 
-        activations_i, 
+        rr,
+        votes_ij,
+        activations_i,
         beta_v, beta_a, 
         inverse_temperature=inverse_temperature)
       
@@ -224,6 +232,8 @@ def em_routing(votes_ij, activations_i, batch_size, spatial_routing_matrix, drop
                     stdv_j, 
                     var_j, 
                     spatial_routing_matrix)
+        if dropconnect:
+          rr = tf.multiply(dropconnect_mask, rr)
 
     # pose: (N, OH, OW, o, 4 x 4) via squeeze mean_j (24, 6, 6, 32, 16)
     poses_j = tf.squeeze(mean_j, axis=-3, name="poses")
@@ -231,11 +241,12 @@ def em_routing(votes_ij, activations_i, batch_size, spatial_routing_matrix, drop
     # activation: (N, OH, OW, o, 1) via squeeze o_activation is 
     # [24, 6, 6, 32, 1]
     activations_j = tf.squeeze(activations_j, axis=-3, name="activations")
-    if drop_rate != 0:
+    if dropout:
       logits = np.log(np.asarray([[drop_rate, 1 - drop_rate]]))
-      mask = tf.cast(tf.random.categorical(logits, tf.size(activations_j)), tf.float32)
-      mask = tf.reshape(mask, tf.shape(activations_j))
-      activations_j = tf.multiply(mask, activations_j)
+      dropout_mask = tf.cast(tf.random.categorical(logits,
+                             tf.size(activations_j)), tf.float32)
+      dropout_mask = tf.reshape(dropout_mask, tf.shape(activations_j))
+      activations_j = tf.multiply(dropout_mask, activations_j)
   return poses_j, activations_j
 
 
