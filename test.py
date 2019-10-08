@@ -175,11 +175,16 @@ def main(args):
     #--------------------------------------------------------------------------
     # SESSION - TEST
     #--------------------------------------------------------------------------
-    sess_test = tf.Session(
-        config=tf.ConfigProto(allow_soft_placement=True, 
-                              log_device_placement=False), 
-        graph=g_test)
-    
+    #sess_test = tf.Session(
+    #    config=tf.ConfigProto(allow_soft_placement=True, 
+    #                          log_device_placement=False), 
+    #    graph=g_test)
+    # Perry: added in for RTX 2070 incompatibility workaround
+    config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
+    config.gpu_options.allow_growth = True
+    sess_test = tf.Session(config=config, graph=g_test)
+
+   
     
     #sess_test.run(tf.local_variables_initializer())
     #sess_test.run(tf.global_variables_initializer())

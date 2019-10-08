@@ -636,16 +636,16 @@ def load_training(saver, session, load_dir):
   Returns:
     The latest saved step.
   """
-  
-  if tf.gfile.Exists(load_dir):   
-    ckpt = tf.train.get_checkpoint_state(load_dir)
+  checkpoint_dir = os.path.join(load_dir, "train", "checkpoint")
+  if tf.gfile.Exists(checkpoint_dir):
+    ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
     if ckpt and ckpt.model_checkpoint_path:
       saver.restore(session, ckpt.model_checkpoint_path)
       prev_step = extract_step(ckpt.model_checkpoint_path)
       logger.info("Restored checkpoint")
     else:
       raise IOError("""AG: load_ckpt directory exists but cannot find a valid 
-                    checkpoint to resore, consider using the reset flag""")
+                    checkpoint to restore, consider using the reset flag""")
   else:
     raise IOError("AG: load_ckpt directory does not exist")
     

@@ -8,6 +8,8 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import numpy as np
 
+from config import FLAGS
+
 
 def create_routing_map(child_space, k, s):
   """Generate TFRecord for train and test datasets from .mat files.
@@ -104,7 +106,7 @@ def kernel_tile(input, kernel, stride):
   return tiled, child_parent_matrix
 
 
-def compute_votes(poses_i, o, regularizer, tag=False):
+def compute_votes(poses_i, o, regularizer, affine_voting=True, tag=False):
   """Compute the votes by multiplying input poses by transformation matrix.
   
   Multiply the poses of layer i by the transform matrix to compute the votes for 
@@ -146,25 +148,27 @@ def compute_votes(poses_i, o, regularizer, tag=False):
                             mean=0.0, 
                             stddev=1.0), #1.0
                           regularizer=regularizer)
-  b = slim.model_variable('b', shape=[1, kh_kw_i, o, 4, 4], 
-                          dtype=tf.float32, 
-                          initializer=tf.zeros_initializer(),
-                          regularizer=regularizer)
+  
   
   # (1, 9*8, 32, 4, 4) -> (64*5*5, 9*8, 32, 4, 4)
   w = tf.tile(w, [batch_size, 1, 1, 1, 1])
-  b = tf.tile(b, [batch_size, 1, 1, 1, 1])
 
   # (64*5*5, 9*8, 1, 4, 4) -> (64*5*5, 9*8, 32, 4, 4)
   output = tf.tile(output, [1, 1, o, 1, 1])
   
   # (64*5*5, 9*8, 32, 4, 4) x (64*5*5, 9*8, 32, 4, 4) 
   # -> (64*5*5, 9*8, 32, 4, 4)
-  mult = tf.matmul(output, w)
-  summ = tf.add(mult, b)
+  votes = tf.matmul(output, w)
+  if affine_voting is True:
+    b = slim.model_variable('b', shape=[1, kh_kw_i, o, 4, 4], 
+                            dtype=tf.float32, 
+                            initializer=tf.zeros_initializer(),
+                            regularizer=regularizer)
+    b = tf.tile(b, [batch_size, 1, 1, 1, 1])
+    votes = tf.add(votes, b)
   
   # (64*5*5, 9*8, 32, 4, 4) -> (64*5*5, 9*8, 32, 16)
-  votes = tf.reshape(summ, [batch_size, kh_kw_i, o, 16])
+  votes = tf.reshape(votes, [batch_size, kh_kw_i, o, 16])
   
   # tf.summary.histogram('w', w) 
 
