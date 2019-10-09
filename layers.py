@@ -25,7 +25,8 @@ def conv_caps(activation_in,
               drop_rate=0,
               dropout=False,
               dropconnect=False,
-              affine_voting=True):
+              affine_voting=True,
+              share_class_kernel=False):
   """Convolutional capsule layer.
   
   "The routing procedure is used between each adjacent pair of capsule layers. 
@@ -105,7 +106,9 @@ def conv_caps(activation_in,
           parent_caps, 
           weights_regularizer, 
           tag=True,
-          affine_voting=affine_voting)
+          affine_voting=affine_voting,
+          share_kernel_weights_by_children_class=share_class_kernel,
+          kernel_size=kernel_2)
       logger.info(name + ' votes shape: {}'.format(votes.get_shape()))
 
     with tf.variable_scope('routing') as scope:
