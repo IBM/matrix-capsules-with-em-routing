@@ -257,6 +257,9 @@ def build_arch_baseline(input, is_train: bool, num_classes: int):
 #------------------------------------------------------------------------------
 # LOSS FUNCTIONS
 #------------------------------------------------------------------------------
+
+# this one only works with capsule network, and only works when only one
+# class is activated
 def capsule_reconstruction_loss(input_images, scores, poses,
                                 layer_1_size, layer_2_size):
   with tf.variable_scope('reconstruction_loss') as scope:
@@ -283,7 +286,8 @@ def capsule_reconstruction_loss(input_images, scores, poses,
                                        name="decoder_output")
     flat_images = tf.reshape(input_images, [-1, output_size])
     sqrd_diff = tf.square(flat_images - decoder_output, name="sqrd_recon_diff")
-    recon_loss = tf.reduce_sum(sqrd_diff, name="reconstruction_loss")
+    # mean instead of sum so the loss is not magnified by image size
+    recon_loss = tf.reduce_mean(sqrd_diff, name="reconstruction_loss")
   return recon_loss
 
 
