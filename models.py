@@ -260,14 +260,18 @@ def build_arch_baseline(input, is_train: bool, num_classes: int):
 def capsule_reconstruction_loss(input_images, scores, poses,
                                 layer_1_size, layer_2_size):
   with tf.variable_scope('reconstruction_loss') as scope:
-    num_classes = scores.get_shape()[1]
-    class_predictions = tf.argmax(scores, axis=-1, name="class_predictions")
-    recon_mask = tf.one_hot(class_predictions, depth=num_classes,
-                            name="reconstruction_mask")
-    decoder_input = tf.multiply(poses, recon_mask, name="masked_poses")
-    batch_size = int(input_images.get_shape()[0])
-    output_size = int(tf.size(input_images)/batch_size)
+    with tf.variable_scope('mask') as scope:
+      num_classes = scores.get_shape()[1]
+      class_predictions = tf.argmax(scores, axis=-1, name="class_predictions")
+      # [batch, num_classes]
+      recon_mask = tf.one_hot(class_predictions, depth=num_classes,
+                              on_value=True, off_value=False, dtype=tf.bool,
+                              name="reconstruction_mask")
+      # dim(poses) = [batch, num_classes, matrix_size]
+      decoder_input = tf.boolean_mask(poses, recon_mask, name="masked_pose")
     with tf.name_scope("decoder"):
+      batch_size = int(input_images.get_shape()[0])
+      output_size = int(np.prod(input_images.get_shape()[1:]))
       recon_1 = tf.layers.dense(decoder_input, layer_1_size,
                                 activation=tf.nn.tanh,
                                 name="recon_1")
@@ -410,28 +414,17 @@ def total_loss(output, y, x):
     if FLAGS.weight_reg:
       # Regularization
       regularization = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
-      reg_loss = tf.add_n(regularization)
-      total_loss = sprd_loss + reg_loss
+      reg_loss = FLAGS.weight_reg_lambda * tf.add_n(regularization)
+      total_loss += reg_loss
       tf.summary.scalar('regularization_loss', reg_loss)
     
     if FLAGS.recon_loss:
       # Capsule Reconstruction
       poses = output["pose_out"]
-      recon_loss = capsule_reconstruction_loss(x, scores, poses,
-                                               FLAGS.X, FLAGS.Y)
+      recon_loss = FLAGS.recon_loss_lambda * capsule_reconstruction_loss(x,
+                                                 scores, poses,
+                                                 FLAGS.X, FLAGS.Y)
+      total_loss += recon_loss
+      tf.summary.scalar('reconstruction_loss', recon_loss)
   return total_loss
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
 

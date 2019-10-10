@@ -32,8 +32,14 @@ flags.DEFINE_float('epsilon', 1e-9, 'epsilon')
 flags.DEFINE_float('lrn_rate', 3e-3, 'learning rate to use in Adam optimiser')
 flags.DEFINE_float('val_prop', 0.1, 
                    'proportion of test dataset to use for validation')
-flags.DEFINE_boolean('weight_reg', False, 
+flags.DEFINE_boolean('weight_reg', False,
                      'train with regularization of weights')
+flags.DEFINE_float('weight_reg_lambda', 0.01, '''lagrange multiplier for
+                   weight regularization constraint''')
+flags.DEFINE_boolean('recon_loss', False, '''whether to apply reconstruction
+                     loss''')
+flags.DEFINE_float('recon_loss_lambda', 1, '''lagrange multiplier for
+                   reconstruction loss constraint''')
 flags.DEFINE_string('norm', 'norm2', 'norm type')
 flags.DEFINE_float('final_lambda', 0.01, 'final lambda in EM routing')
 flags.DEFINE_boolean('affine_voting', True, '''whether to use affine instead
