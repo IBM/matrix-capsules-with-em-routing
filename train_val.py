@@ -546,11 +546,8 @@ def tower_fn(build_arch,
   
   with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables):
     output = build_arch(x, is_train, num_classes=num_classes)
-    scores = output['scores']
-    
-  loss = mod.total_loss(scores, y)
-
-  return loss, scores
+  loss = mod.total_loss(output, y, x)
+  return loss, output['scores']
 
 
 def average_gradients(tower_grads):

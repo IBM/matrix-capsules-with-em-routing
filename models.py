@@ -257,6 +257,32 @@ def build_arch_baseline(input, is_train: bool, num_classes: int):
 #------------------------------------------------------------------------------
 # LOSS FUNCTIONS
 #------------------------------------------------------------------------------
+def capsule_reconstruction_loss(input_images, scores, poses,
+                                layer_1_size, layer_2_size):
+  with tf.variable_scope('reconstruction_loss') as scope:
+    num_classes = scores.get_shape()[1]
+    class_predictions = tf.argmax(scores, axis=-1, name="class_predictions")
+    recon_mask = tf.one_hot(class_predictions, depth=num_classes,
+                            name="reconstruction_mask")
+    decoder_input = tf.multiply(poses, recon_mask, name="masked_poses")
+    batch_size = int(input_images.get_shape()[0])
+    output_size = int(tf.size(input_images)/batch_size)
+    with tf.name_scope("decoder"):
+      recon_1 = tf.layers.dense(decoder_input, layer_1_size,
+                                activation=tf.nn.tanh,
+                                name="recon_1")
+      recon_2 = tf.layers.dense(recon_1, layer_2_size,
+                                activation=tf.nn.tanh,
+                                name="recon_2")
+      decoder_output = tf.layers.dense(recon_2, output_size,
+                                       activation=tf.nn.sigmoid,
+                                       name="decoder_output")
+    flat_images = tf.reshape(input_images, [-1, output_size])
+    sqrd_diff = tf.square(flat_images - decoder_output, name="sqrd_recon_diff")
+    recon_loss = tf.reduce_sum(sqrd_diff, name="reconstruction_loss")
+  return recon_loss
+
+
 def spread_loss(scores, y):
   """Spread loss.
   
@@ -352,7 +378,7 @@ def cross_ent_loss(logits, y):
 
 
 
-def total_loss(scores, y):
+def total_loss(output, y, x):
   """total_loss = spread_loss + regularization_loss.
   
   If the flag to regularize is set, the the total loss is the sum of the spread   loss and the regularization loss.
@@ -375,24 +401,25 @@ def total_loss(scores, y):
       mean total loss for entire batch
       (scalar)
   """
-  
+  scores = output["scores"]
   with tf.variable_scope('total_loss') as scope:
     # spread loss
-    sprd_loss = spread_loss(scores, y)
+    total_loss = spread_loss(scores, y)
+    tf.summary.scalar('spread_loss', total_loss)
 
     if FLAGS.weight_reg:
       # Regularization
       regularization = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
       reg_loss = tf.add_n(regularization)
       total_loss = sprd_loss + reg_loss
-      tf.summary.scalar('spread_loss', sprd_loss)
       tf.summary.scalar('regularization_loss', reg_loss)
-    else:
-      # No regularization
-      total_loss = sprd_loss
-      tf.summary.scalar('spread_loss', sprd_loss)
-
-  return total_loss 
+    
+    if FLAGS.recon_loss:
+      # Capsule Reconstruction
+      poses = output["pose_out"]
+      recon_loss = capsule_reconstruction_loss(x, scores, poses,
+                                               FLAGS.X, FLAGS.Y)
+  return total_loss
 
 
 

@@ -51,7 +51,8 @@ flags.DEFINE_integer('A', 64, 'number of channels in output from ReLU Conv1')
 flags.DEFINE_integer('B', 8, 'number of capsules in output from PrimaryCaps')
 flags.DEFINE_integer('C', 16, 'number of channels in output from ConvCaps1')
 flags.DEFINE_integer('D', 16, 'number of channels in output from ConvCaps2')
-
+flags.DEFINE_integer('X', 512, 'number of neurons in reconstructive layer 1')
+flags.DEFINE_integer('Y', 1024, 'number of neurons in reconstructive layer 2')
 
 #------------------------------------------------------------------------------
 # ENVIRONMENT SETTINGS
