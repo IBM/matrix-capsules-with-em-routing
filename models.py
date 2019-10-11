@@ -41,10 +41,10 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
   # "We use a weight decay loss with a small factor of .0000002 rather than 
   # the reconstruction loss."
   # https://openreview.net/forum?id=HJWLfGWRb&noteId=rJeQnSsE3X
-  weights_regularizer = tf.contrib.layers.l2_regularizer(0.0000002)
+  weights_regularizer = tf.contrib.layers.l2_regularizer(FLAGS.weight_reg_lambda)
 
   # weights_initializer=initializer,
-  with slim.arg_scope([slim.conv2d], 
+  with slim.arg_scope([slim.conv2d, slim.fully_connected], 
     trainable = is_train, 
     biases_initializer = bias_initializer,
     weights_regularizer = weights_regularizer):
@@ -155,7 +155,28 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
         dropout = False,
         dropconnect = FLAGS.dropconnect if is_train else False,
         affine_voting = FLAGS.affine_voting)
-    
+
+    if FLAGS.recon_loss:
+      class_predictions = tf.argmax(activation_out, axis=-1,
+                                    name="class_predictions")
+      # [batch, num_classes]
+      recon_mask = tf.one_hot(class_predictions, depth=num_classes,
+                              on_value=True, off_value=False, dtype=tf.bool,
+                              name="reconstruction_mask")
+      # dim(poses) = [batch, num_classes, matrix_size]
+      decoder_input = tf.boolean_mask(pose_out, recon_mask, name="masked_pose")
+      output_size = int(np.prod(inp.get_shape()[1:]))
+      recon_1 = slim.fully_connected(decoder_input, FLAGS.X,
+                                     activation_fn=tf.nn.tanh,
+                                     scope="recon_1")
+      recon_2 = slim.fully_connected(recon_1, FLAGS.Y,
+                                     activation_fn=tf.nn.tanh,
+                                     scope="recon_2") 
+      decoder_output = slim.fully_connected(recon_2, output_size,
+                                            activation_fn=tf.nn.sigmoid,
+                                            scope="decoder_output")   
+      return {'scores': activation_out, 'pose_out': pose_out,
+              'decoder_out': decoder_output, 'input': inp}
   return {'scores': activation_out, 'pose_out': pose_out}
 
 
@@ -245,8 +266,8 @@ def build_arch_baseline(input, is_train: bool, num_classes: int):
     
     #----- FC final layer -----#
     logits = slim.fully_connected(
-        output, 
-        num_classes, 
+        output,
+        num_classes,
         scope='final_layer', 
         activation_fn=None)
     logger.info('output shape: {}'.format(output.get_shape()))
@@ -260,35 +281,10 @@ def build_arch_baseline(input, is_train: bool, num_classes: int):
 
 # this one only works with capsule network, and only works when only one
 # class is activated
-def capsule_reconstruction_loss(input_images, scores, poses,
-                                layer_1_size, layer_2_size):
-  with tf.variable_scope('reconstruction_loss') as scope:
-    with tf.variable_scope('mask') as scope:
-      num_classes = scores.get_shape()[1]
-      class_predictions = tf.argmax(scores, axis=-1, name="class_predictions")
-      # [batch, num_classes]
-      recon_mask = tf.one_hot(class_predictions, depth=num_classes,
-                              on_value=True, off_value=False, dtype=tf.bool,
-                              name="reconstruction_mask")
-      # dim(poses) = [batch, num_classes, matrix_size]
-      decoder_input = tf.boolean_mask(poses, recon_mask, name="masked_pose")
-    with tf.name_scope("decoder"):
-      batch_size = int(input_images.get_shape()[0])
-      output_size = int(np.prod(input_images.get_shape()[1:]))
-      recon_1 = tf.layers.dense(decoder_input, layer_1_size,
-                                activation=tf.nn.tanh,
-                                name="recon_1")
-      recon_2 = tf.layers.dense(recon_1, layer_2_size,
-                                activation=tf.nn.tanh,
-                                name="recon_2")
-      decoder_output = tf.layers.dense(recon_2, output_size,
-                                       activation=tf.nn.sigmoid,
-                                       name="decoder_output")
-    flat_images = tf.reshape(input_images, [-1, output_size])
-    sqrd_diff = tf.square(flat_images - decoder_output, name="sqrd_recon_diff")
-    # mean instead of sum so the loss is not magnified by image size
-    recon_loss = tf.reduce_mean(sqrd_diff, name="reconstruction_loss")
-  return recon_loss
+def capsule_decoder(input_images, scores, poses,
+                    layer_1_size, layer_2_size,
+                    is_train):
+ return decoder_output 
 
 
 def spread_loss(scores, y):
@@ -385,8 +381,17 @@ def cross_ent_loss(logits, y):
   return loss
 
 
+def reconstruction_loss(input_images, decoder_output):
+  with tf.variable_scope('reconstruction_loss') as scope:
+    output_size = int(np.prod(input_images.get_shape()[1:]))
+    flat_images = tf.reshape(input_images, [-1, output_size])
+    sqrd_diff = tf.square(flat_images - decoder_output)
+    # mean instead of sum so the loss is not magnified by image size
+    recon_loss = tf.reduce_mean(sqrd_diff)
+  return recon_loss
 
-def total_loss(output, y, x):
+ 
+def total_loss(output, y):
   """total_loss = spread_loss + regularization_loss.
   
   If the flag to regularize is set, the the total loss is the sum of the spread   loss and the regularization loss.
@@ -409,25 +414,25 @@ def total_loss(output, y, x):
       mean total loss for entire batch
       (scalar)
   """
-  scores = output["scores"]
   with tf.variable_scope('total_loss') as scope:
     # spread loss
+    scores = output["scores"]
     total_loss = spread_loss(scores, y)
     tf.summary.scalar('spread_loss', total_loss)
 
     if FLAGS.weight_reg:
       # Regularization
       regularization = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
-      reg_loss = FLAGS.weight_reg_lambda * tf.add_n(regularization)
+      reg_loss = tf.add_n(regularization)
       total_loss += reg_loss
       tf.summary.scalar('regularization_loss', reg_loss)
     
     if FLAGS.recon_loss:
       # Capsule Reconstruction
-      poses = output["pose_out"]
-      recon_loss = FLAGS.recon_loss_lambda * capsule_reconstruction_loss(x,
-                                                 scores, poses,
-                                                 FLAGS.X, FLAGS.Y)
+      x = output["input"]
+      decoder_output = output["decoder_out"]
+      recon_loss = FLAGS.recon_loss_lambda * reconstruction_loss(x,
+                                                 decoder_output)
       total_loss += recon_loss
       tf.summary.scalar('reconstruction_loss', recon_loss)
   return total_loss

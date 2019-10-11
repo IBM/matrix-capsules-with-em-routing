@@ -210,7 +210,7 @@ def em_routing(votes_ij, activations_i, batch_size, spatial_routing_matrix, drop
       # where 'i' is the routing iteration (range is 0-2). Final_lambda is set 
       # to 0.01."
       # final_lambda = 0.01
-      final_lambda = FLAGS.final_lambda
+      final_lambda = FLAGS.final_temp
       inverse_temperature = (final_lambda * 
                              (1 - tf.pow(0.95, tf.cast(it + 1, tf.float32))))
 
