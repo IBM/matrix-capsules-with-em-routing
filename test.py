@@ -265,13 +265,12 @@ def main(args):
       summary_test.value.add(tag="test_loss", simple_value=ave_loss)
       summary_writer.add_summary(summary_test, ckpt_num)
       
-      
 def tower_fn(build_arch, 
              x, 
              y, 
              scope, 
              num_classes, 
-             is_train=True, 
+             is_train=False, 
              reuse_variables=None):
   """Model tower to be run on each GPU.
   
@@ -300,12 +299,9 @@ def tower_fn(build_arch,
   
   with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables):
     output = build_arch(x, is_train, num_classes=num_classes)
-    scores = output['scores']
-    
-  loss = mod.total_loss(scores, y)
-
-  return loss, scores
-      
+  loss = mod.total_loss(output, y)
+  return loss, output['scores']
+ 
 
 if __name__ == "__main__":
   tf.app.run()

@@ -226,7 +226,7 @@ def main(args):
       # Get global_step
       global_step = tf.train.get_or_create_global_step()
 
-      num_batches_val = int(dataset_size_val / FLAGS.batch_size * FLAGS.val_prop)
+      num_batches_val = int(dataset_size_val / FLAGS.batch_size)
       
       # Get data
       input_dict = create_inputs_val()

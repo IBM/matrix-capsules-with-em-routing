@@ -37,8 +37,6 @@ flags.DEFINE_boolean('weight_reg', False,
 flags.DEFINE_float('weight_reg_lambda', 2e-7, '''lagrange multiplier for
                    l2 weight regularization constraint for convolution
                    and capsule encoder, as well as fc decoder''')
-flags.DEFINE_boolean('recon_loss', False, '''whether to apply reconstruction
-                     loss''')
 flags.DEFINE_float('recon_loss_lambda', 1, '''lagrange multiplier for
                    reconstruction loss constraint''')
 flags.DEFINE_string('norm', 'norm2', 'norm type')
@@ -59,6 +57,15 @@ flags.DEFINE_integer('A', 64, 'number of channels in output from ReLU Conv1')
 flags.DEFINE_integer('B', 8, 'number of capsules in output from PrimaryCaps')
 flags.DEFINE_integer('C', 16, 'number of channels in output from ConvCaps1')
 flags.DEFINE_integer('D', 16, 'number of channels in output from ConvCaps2')
+flags.DEFINE_boolean('go_deep', False, '''whether or not to go deeper''')
+flags.DEFINE_integer('E', 16, 'number of channels in output from ConvCaps3')
+flags.DEFINE_integer('F', 16, 'number of channels in output from ConvCaps4')
+flags.DEFINE_integer('G', 16, 'number of channels in output from ConvCaps5')
+flags.DEFINE_integer('H', 16, 'number of channels in output from ConvCaps5')
+flags.DEFINE_integer('I', 16, 'number of channels in output from ConvCaps5')
+flags.DEFINE_integer('J', 16, 'number of channels in output from ConvCaps5')
+flags.DEFINE_boolean('recon_loss', False, '''whether to apply reconstruction
+                     loss''')
 flags.DEFINE_integer('X', 512, 'number of neurons in reconstructive layer 1')
 flags.DEFINE_integer('Y', 1024, 'number of neurons in reconstructive layer 2')
 
