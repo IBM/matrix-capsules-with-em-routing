@@ -30,8 +30,6 @@ flags.DEFINE_integer('epoch', 100, 'epoch')
 flags.DEFINE_integer('iter_routing', 2, 'number of iterations')
 flags.DEFINE_float('epsilon', 1e-9, 'epsilon')
 flags.DEFINE_float('lrn_rate', 3e-3, 'learning rate to use in Adam optimiser')
-flags.DEFINE_float('val_prop', 0.1, 
-                   'proportion of test dataset to use for validation')
 flags.DEFINE_boolean('weight_reg', False,
                      'train with regularization of weights')
 flags.DEFINE_float('weight_reg_lambda', 2e-7, '''lagrange multiplier for
