@@ -41,13 +41,14 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
   # "We use a weight decay loss with a small factor of .0000002 rather than 
   # the reconstruction loss."
   # https://openreview.net/forum?id=HJWLfGWRb&noteId=rJeQnSsE3X
-  weights_regularizer = tf.contrib.layers.l2_regularizer(FLAGS.weight_reg_lambda)
+  nn_weights_regularizer = tf.contrib.layers.l2_regularizer(FLAGS.nn_weight_reg_lambda)
+  capsule_weights_regularizer = tf.contrib.layers.l2_regularizer(FLAGS.capsule_weight_reg_lambda)
 
   # weights_initializer=initializer,
   with slim.arg_scope([slim.conv2d, slim.fully_connected], 
     trainable = is_train, 
     biases_initializer = bias_initializer,
-    weights_regularizer = weights_regularizer):
+    weights_regularizer = nn_weights_regularizer):
     
     #----- Batch Norm -----#
     output = slim.batch_norm(
@@ -119,7 +120,7 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
         stride = 2,
         ncaps_out = FLAGS.C,
         name = 'lyr.conv_caps1',
-        weights_regularizer = weights_regularizer,
+        weights_regularizer = capsule_weights_regularizer,
         affine_voting = FLAGS.affine_voting)
     
     #----- Conv Caps 2 -----#
@@ -134,7 +135,7 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
         stride = 1, 
         ncaps_out = FLAGS.D, 
         name = 'lyr.conv_caps2',
-        weights_regularizer = weights_regularizer,
+        weights_regularizer = capsule_weights_regularizer,
         drop_rate = FLAGS.drop_rate,
         dropout = FLAGS.dropout if is_train else False,
         dropconnect = FLAGS.dropconnect if is_train else False,
@@ -150,7 +151,7 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
         pose_in = pose,
         ncaps_out = num_classes,
         name = 'class_caps',
-        weights_regularizer = weights_regularizer,
+        weights_regularizer = capsule_weights_regularizer,
         drop_rate = FLAGS.drop_rate,
         dropout = False,
         dropconnect = FLAGS.dropconnect if is_train else False,
@@ -178,164 +179,6 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
       return {'scores': activation_out, 'pose_out': pose_out,
               'decoder_out': decoder_output, 'input': inp}
   return {'scores': activation_out, 'pose_out': pose_out}
-
-
-def build_arch_deepnorb(inp, is_train: bool, num_classes: int):
-  
-  logger.info('input shape: {}'.format(inp.get_shape()))
-  batch_size = int(inp.get_shape()[0])
-  spatial_size = int(inp.get_shape()[1])
-
-  # xavier initialization is necessary here to provide higher stability
-  # initializer = tf.truncated_normal_initializer(mean=0.0, stddev=0.01)
-  # instead of initializing bias with constant 0, a truncated normal 
-  # initializer is exploited here for higher stability
-  bias_initializer = tf.truncated_normal_initializer(mean=0.0, stddev=0.01) 
-
-  # AG 13/11/2018
-  # In response to a question on OpenReview, Hinton et al. wrote the 
-  # following:
-  # "We use a weight decay loss with a small factor of .0000002 rather than 
-  # the reconstruction loss."
-  # https://openreview.net/forum?id=HJWLfGWRb&noteId=rJeQnSsE3X
-  weights_regularizer = tf.contrib.layers.l2_regularizer(FLAGS.weight_reg_lambda)
-
-  # weights_initializer=initializer,
-  with slim.arg_scope([slim.conv2d, slim.fully_connected], 
-    trainable = is_train, 
-    biases_initializer = bias_initializer,
-    weights_regularizer = weights_regularizer):
-    
-    #----- Batch Norm -----#
-    output = slim.batch_norm(
-        inp,
-        center=False, 
-        is_training=is_train, 
-        trainable=is_train)
-    
-    #----- Convolutional Layer 1 -----#
-    with tf.variable_scope('relu_conv1') as scope:
-      output = slim.conv2d(output, 
-      num_outputs=FLAGS.A, 
-      kernel_size=[5, 5], 
-      stride=2, 
-      padding='SAME', 
-      scope=scope, 
-      activation_fn=tf.nn.relu)
-      
-      spatial_size = int(output.get_shape()[1])
-      assert output.get_shape() == [batch_size, spatial_size, spatial_size, 
-                                    FLAGS.A]
-      logger.info('relu_conv1 output shape: {}'.format(output.get_shape()))
-    
-    #----- Primary Capsules -----#
-    with tf.variable_scope('primary_caps') as scope:
-      pose = slim.conv2d(output, 
-      num_outputs=FLAGS.B * 16, 
-      kernel_size=[1, 1], 
-      stride=1, 
-      padding='VALID', 
-      scope='pose', 
-      activation_fn=None)
-      activation = slim.conv2d(
-          output, 
-          num_outputs=FLAGS.B, 
-          kernel_size=[1, 1], 
-          stride=1,
-          padding='VALID', 
-          scope='activation', 
-          activation_fn=tf.nn.sigmoid)
-
-      spatial_size = int(pose.get_shape()[1])
-      pose = tf.reshape(pose, shape=[batch_size, spatial_size, spatial_size, 
-                                     FLAGS.B, 16], name='pose')
-      activation = tf.reshape(
-          activation, 
-          shape=[batch_size, spatial_size, spatial_size, FLAGS.B, 1], 
-          name="activation")
-      
-      assert pose.get_shape() == [batch_size, spatial_size, spatial_size, 
-                                  FLAGS.B, 16]
-      assert activation.get_shape() == [batch_size, spatial_size, spatial_size,
-                                        FLAGS.B, 1]
-      logger.info('primary_caps pose shape: {}'.format(pose.get_shape()))
-      logger.info('primary_caps activation shape {}'
-                  .format(activation.get_shape()))
-      
-      tf.summary.histogram("activation", activation)
-       
-    #----- Conv Caps 1 -----#
-    # activation_in: (64, 7, 7, 8, 1) 
-    # pose_in: (64, 7, 7, 16, 16) 
-    # activation_out: (64, 5, 5, 32, 1)
-    # pose_out: (64, 5, 5, 32, 16)
-    activation, pose = lyr.conv_caps(
-        activation_in = activation,
-        pose_in = pose,
-        kernel = 3, 
-        stride = 2,
-        ncaps_out = FLAGS.C,
-        name = 'lyr.conv_caps1',
-        weights_regularizer = weights_regularizer,
-        affine_voting = FLAGS.affine_voting)
-    
-    #----- Conv Caps 2 -----#
-    # activation_in: (64, 7, 7, 8, 1) 
-    # pose_in: (64, 7, 7, 16, 1) 
-    # activation_out: (64, 5, 5, 32, 1)
-    # pose_out: (64, 5, 5, 32, 16)
-    activation, pose = lyr.conv_caps(
-        activation_in = activation, 
-        pose_in = pose, 
-        kernel = 3, 
-        stride = 1, 
-        ncaps_out = FLAGS.D, 
-        name = 'lyr.conv_caps2',
-        weights_regularizer = weights_regularizer,
-        drop_rate = FLAGS.drop_rate,
-        dropout = FLAGS.dropout if is_train else False,
-        dropconnect = FLAGS.dropconnect if is_train else False,
-        affine_voting = FLAGS.affine_voting)
-    
-    #----- Class Caps -----#
-    # activation_in: (64, 5, 5, 32, 1)
-    # pose_in: (64, 5, 5, 32, 16)
-    # activation_out: (64, 5)
-    # pose_out: (64, 5, 16) 
-    activation_out, pose_out = lyr.fc_caps(
-        activation_in = activation,
-        pose_in = pose,
-        ncaps_out = num_classes,
-        name = 'class_caps',
-        weights_regularizer = weights_regularizer,
-        drop_rate = FLAGS.drop_rate,
-        dropout = False,
-        dropconnect = FLAGS.dropconnect if is_train else False,
-        affine_voting = FLAGS.affine_voting)
-
-    if FLAGS.recon_loss:
-      class_predictions = tf.argmax(activation_out, axis=-1,
-                                    name="class_predictions")
-      # [batch, num_classes]
-      recon_mask = tf.one_hot(class_predictions, depth=num_classes,
-                              on_value=True, off_value=False, dtype=tf.bool,
-                              name="reconstruction_mask")
-      # dim(poses) = [batch, num_classes, matrix_size]
-      decoder_input = tf.boolean_mask(pose_out, recon_mask, name="masked_pose")
-      output_size = int(np.prod(inp.get_shape()[1:]))
-      recon_1 = slim.fully_connected(decoder_input, FLAGS.X,
-                                     activation_fn=tf.nn.tanh,
-                                     scope="recon_1")
-      recon_2 = slim.fully_connected(recon_1, FLAGS.Y,
-                                     activation_fn=tf.nn.tanh,
-                                     scope="recon_2") 
-      decoder_output = slim.fully_connected(recon_2, output_size,
-                                            activation_fn=tf.nn.sigmoid,
-                                            scope="decoder_output")   
-      return {'scores': activation_out, 'pose_out': pose_out,
-              'decoder_out': decoder_output, 'input': inp}
-  return {'scores': activation_out, 'pose_out': pose_out}
-
 
 
 #------------------------------------------------------------------------------

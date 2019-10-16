@@ -32,9 +32,10 @@ flags.DEFINE_float('epsilon', 1e-9, 'epsilon')
 flags.DEFINE_float('lrn_rate', 3e-3, 'learning rate to use in Adam optimiser')
 flags.DEFINE_boolean('weight_reg', False,
                      'train with regularization of weights')
-flags.DEFINE_float('weight_reg_lambda', 2e-7, '''lagrange multiplier for
-                   l2 weight regularization constraint for convolution
-                   and capsule encoder, as well as fc decoder''')
+flags.DEFINE_float('nn_weight_reg_lambda', 2e-7, '''lagrange multiplier for
+                   l2 weight regularization constraint of non-capsule weights''')
+flags.DEFINE_float('capsule_weight_reg_lambda', 0, '''lagrange multiplier for
+                    l2 weight regularization constraint of capsule weights''')
 flags.DEFINE_float('recon_loss_lambda', 1, '''lagrange multiplier for
                    reconstruction loss constraint''')
 flags.DEFINE_string('norm', 'norm2', 'norm type')
