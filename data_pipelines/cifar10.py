@@ -16,7 +16,7 @@ def create_inputs(is_train, force_train_set=False):
   if is_train:
     data = data.shuffle(2000 + 3 * FLAGS.batch_size).batch(FLAGS.batch_size, drop_remainder=True).repeat()
   else:
-    data = data.batch(2, drop_remainder=False).repeat()
+    data = data.batch(FLAGS.batch_size, drop_remainder=True).repeat()
   data = data.prefetch(1)
   iterator = data.make_one_shot_iterator()
   img, lab = iterator.get_next()
