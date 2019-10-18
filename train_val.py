@@ -586,8 +586,8 @@ def main(args):
             ckpt_num = re.split('-', latest_ckpt)[-1]
 
           # Average across batches
-          ave_acc = accuracy_sum / num_batches_val
-          ave_loss = loss_sum / num_batches_val
+          ave_acc = accuracy_sum / num_batches_per_epoch
+          ave_loss = loss_sum / num_batches_per_epoch
            
           logger.info('TRN ckpt-{}'.format(ckpt_num) 
                       + ' avg_acc: {:.2f}%'.format(ave_acc*100) 
