@@ -65,6 +65,7 @@ def main(args):
   build_arch      = conf.get_dataset_architecture(FLAGS.dataset)
   num_classes     = conf.get_num_classes(FLAGS.dataset)
   create_inputs_train = conf.get_create_inputs(FLAGS.dataset, mode="train")
+  create_inputs_train_wholeset = conf.get_create_inputs(FLAGS.dataset, mode="train_whole")
   if dataset_size_val > 0:
     create_inputs_val   = conf.get_create_inputs(FLAGS.dataset, mode="validate")
 
@@ -199,8 +200,8 @@ def main(args):
     trn_read = {}
     
     # Logging
-    tf.summary.scalar('trn_loss', loss)
-    tf.summary.scalar('trn_acc', acc)
+    tf.summary.scalar('batch_loss', loss)
+    tf.summary.scalar('batch_acc', acc)
 
     # Set Saver
     # AG 26/09/2018: Save all variables including Adam so that we can continue 
@@ -215,7 +216,94 @@ def main(args):
         
     # Set summary op
     trn_summary = tf.summary.merge_all()
+
+  #----------------------------------------------------------------------------
+  # GRAPH - TRAINING SET ACCURACY
+  #----------------------------------------------------------------------------
+  logger.info('BUILD TRAINING SET ACCURACY GRAPH')
+  g_trn_acc = tf.Graph()
+  with g_trn_acc.as_default():
+    # Get global_step
+    global_step = tf.train.get_or_create_global_step()
+
     
+    # Get data
+    input_dict = create_inputs_train_wholeset()
+    batch_x = input_dict['image']
+    batch_labels = input_dict['label']
+    
+    # AG 10/12/2018: Split batch for multi gpu implementation
+    # Each split is of size FLAGS.batch_size / FLAGS.num_gpus
+    # See: https://github.com/naturomics/CapsNet-
+    # Tensorflow/blob/master/dist_version/distributed_train.py
+    splits_x = tf.split(
+        axis=0, 
+        num_or_size_splits=FLAGS.num_gpus, 
+        value=batch_x)
+    splits_labels = tf.split(
+        axis=0, 
+        num_or_size_splits=FLAGS.num_gpus, 
+        value=batch_labels)
+    
+    
+    #--------------------------------------------------------------------------
+    # MULTI GPU - TRAINING SET ACCURACY
+    #--------------------------------------------------------------------------
+    # Calculate the logits for each model tower
+    tower_logits = []
+    reuse_variables = None
+    for i in range(FLAGS.num_gpus):
+      with tf.device('/gpu:%d' % i):
+        with tf.name_scope('tower_%d' % i) as scope:
+          with slim.arg_scope([slim.variable], device='/cpu:0'):
+            loss, logits = tower_fn(
+                build_arch, 
+                splits_x[i], 
+                splits_labels[i], 
+                scope, 
+                num_classes, 
+                reuse_variables=reuse_variables, 
+                is_train=False)
+
+          # Don't reuse variable for first GPU, but do reuse for others
+          reuse_variables = True
+          
+          # Keep track of losses and logits across for each tower
+          tower_logits.append(logits)
+          
+          # Loss for each tower
+          tf.summary.histogram("train_set_logits", logits)
+    
+    # Combine logits from all towers
+    logits = tf.concat(tower_logits, axis=0)
+    
+    # Calculate metrics
+    train_set_loss = mod.spread_loss(logits, batch_labels)
+    train_set_acc = met.accuracy(logits, batch_labels)
+    
+    # Prepare predictions and one-hot labels
+    train_set_probs = tf.nn.softmax(logits=logits)
+    train_set_labels_oh = tf.one_hot(batch_labels, num_classes)
+    
+    # Group metrics together
+    # See: https://cs230-stanford.github.io/tensorflow-model.html
+    train_set_metrics = {'loss' : train_set_loss,
+                   'labels' : batch_labels, 
+                   'labels_oh' : train_set_labels_oh,
+                   'logits' : logits,
+                   'probs' : train_set_probs,
+                   'acc' : train_set_acc,
+                   }
+    
+    # Reset and read operations for streaming metrics go here
+    train_set_reset = {}
+    train_set_read = {}
+    saver = tf.train.Saver(max_to_keep=None)
+    
+    tf.summary.scalar("train_set_loss", train_set_loss)
+    tf.summary.scalar("train_set_acc", train_set_acc)
+    trn_acc_summary = tf.summary.merge_all()
+  
   if dataset_size_val > 0: 
     #----------------------------------------------------------------------------
     # GRAPH - VALIDATION
@@ -347,6 +435,22 @@ def main(args):
   summary_writer = tf.summary.FileWriter(train_summary_dir, 
                                          graph=sess_train.graph)
 
+
+  #----- SESSION TRAIN SET ACCURACY -----#
+  #sess_val = tf.Session(config=tf.ConfigProto(allow_soft_placement=True,
+  #                                            log_device_placement=False),
+  #                      graph=g_val)
+
+  # Perry: added in for RTX 2070 incompatibility workaround
+  config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
+  config.gpu_options.allow_growth = True
+  sess_train_acc = tf.Session(config=config, graph=g_trn_acc)
+
+  with g_trn_acc.as_default():
+    sess_train_acc.run([tf.local_variables_initializer(), 
+                        tf.global_variables_initializer()])
+
+
   if dataset_size_val > 0:
     #----- SESSION VALIDATION -----#
     #sess_val = tf.Session(config=tf.ConfigProto(allow_soft_placement=True,
@@ -417,13 +521,13 @@ def main(args):
                 run_metadata, 'step{:d}'.format(step))
           
           # Logging
-          logger.info('TRN'
-                + ' e-{:d}'.format(epoch)
-                + ' stp-{:d}'.format(step) 
-                + ' {:.2f}s'.format(toc - tic) 
-                + ' loss: {:.4f}'.format(trn_metrics_v['loss'])
-                + ' acc: {:.2f}%'.format(trn_metrics_v['acc']*100)
-                 )
+          #logger.info('TRN'
+          #      + ' e-{:d}'.format(epoch)
+          #      + ' stp-{:d}'.format(step) 
+          #      + ' {:.2f}s'.format(toc - tic) 
+          #      + ' loss: {:.4f}'.format(trn_metrics_v['loss'])
+          #      + ' acc: {:.2f}%'.format(trn_metrics_v['acc']*100)
+          #       )
 
     except KeyboardInterrupt:
       sess_train.close()
@@ -454,9 +558,50 @@ def main(args):
           # Save ckpt from train session
           ckpt_path = os.path.join(train_checkpoint_dir, 'model.ckpt')
           saver.save(sess_train, ckpt_path, global_step=step)
-      if dataset_size_val > 0: 
-        # VALIDATE MODEL
-        if (step % VAL_FREQ) == 0:
+      if (step % VAL_FREQ) == 0:
+        # calculate metrics every epoch
+        with g_trn_acc.as_default():
+          logger.info("Start Train Set Accuracy")
+          # Restore ckpt to val session
+          latest_ckpt = tf.train.latest_checkpoint(train_checkpoint_dir)
+          saver.restore(sess_train_acc, latest_ckpt)
+          
+          # Reset accumulators
+          accuracy_sum = 0
+          loss_sum = 0
+          sess_train_acc.run(train_set_reset)
+          
+          for i in range(num_batches_per_epoch):
+            train_set_metrics_v, train_set_summary_str_v = sess_train_acc.run(
+                [train_set_metrics, trn_acc_summary])
+            
+            # Update
+            accuracy_sum += train_set_metrics_v['acc']
+            loss_sum += train_set_metrics_v['loss']
+            
+            # Read
+            trn_read_v = sess_train_acc.run(val_read)
+            
+            # Get checkpoint number
+            ckpt_num = re.split('-', latest_ckpt)[-1]
+
+          # Average across batches
+          ave_acc = accuracy_sum / num_batches_val
+          ave_loss = loss_sum / num_batches_val
+           
+          logger.info('TRN ckpt-{}'.format(ckpt_num) 
+                      + ' avg_acc: {:.2f}%'.format(ave_acc*100) 
+                      + ' avg_loss: {:.4f}'.format(ave_loss)
+                     )
+          
+          logger.info("Write Train Summary")
+          summary_train = tf.Summary()
+          summary_train.value.add(tag="trn_acc", simple_value=ave_acc)
+          summary_train.value.add(tag="trn_loss", simple_value=ave_loss)
+          summary_writer.add_summary(summary_train, step)
+          
+
+        if dataset_size_val > 0: 
           #----- Validation -----#
           with g_val.as_default():
             logger.info("Start Validation")
@@ -485,11 +630,11 @@ def main(args):
               ckpt_num = re.split('-', latest_ckpt)[-1]
 
               # Logging
-              logger.info('VAL ckpt-{}'.format(ckpt_num) 
-                          + ' bch-{:d}'.format(i) 
-                          + ' cum_acc: {:.2f}%'.format(accuracy_sum/(i+1)*100) 
-                          + ' cum_loss: {:.4f}'.format(loss_sum/(i+1))
-                         )
+              #logger.info('VAL ckpt-{}'.format(ckpt_num) 
+              #            + ' bch-{:d}'.format(i) 
+              #            + ' cum_acc: {:.2f}%'.format(accuracy_sum/(i+1)*100) 
+              #            + ' cum_loss: {:.4f}'.format(loss_sum/(i+1))
+              #           )
             
             # Average across batches
             ave_acc = accuracy_sum / num_batches_val

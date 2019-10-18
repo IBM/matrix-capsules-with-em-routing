@@ -132,7 +132,7 @@ def _val_preprocess(img, lab, cat, elv, azi, lit):
   return img, lab, cat, elv, azi, lit
   
 
-def input_fn(path, is_train: bool):
+def input_fn(path, is_train: bool, force_train_set):
   """Input pipeline for smallNORB using tf.data.
   
   Author:
@@ -178,8 +178,11 @@ def input_fn(path, is_train: bool):
   dataset = dataset.shuffle(buffer_size = capacity)
     
   # 4. batch
-  dataset = dataset.batch(FLAGS.batch_size, drop_remainder=True)
-  
+  if is_train:
+    dataset = dataset.batch(FLAGS.batch_size, drop_remainder=True)
+  else:
+    dataset = dataset.batch(FLAGS.batch_size, drop_remainder=False)
+
   # 5. repeat
   dataset = dataset.repeat(count=FLAGS.epoch)
   
@@ -189,7 +192,7 @@ def input_fn(path, is_train: bool):
   return dataset
 
 
-def create_inputs_norb(path, is_train: bool):
+def create_inputs_norb(path, is_train: bool, force_train_set = False):
   """Get a batch from the input pipeline.
   
   Author:
@@ -201,7 +204,7 @@ def create_inputs_norb(path, is_train: bool):
   """
   
   # Create batched dataset
-  dataset = input_fn(path, is_train)
+  dataset = input_fn(path, is_train, force_train_set)
   
   # Create one-shot iterator
   iterator = dataset.make_one_shot_iterator()

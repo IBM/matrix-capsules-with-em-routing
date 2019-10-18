@@ -56,13 +56,12 @@ flags.DEFINE_integer('A', 64, 'number of channels in output from ReLU Conv1')
 flags.DEFINE_integer('B', 8, 'number of capsules in output from PrimaryCaps')
 flags.DEFINE_integer('C', 16, 'number of channels in output from ConvCaps1')
 flags.DEFINE_integer('D', 16, 'number of channels in output from ConvCaps2')
-flags.DEFINE_boolean('go_deep', False, '''whether or not to go deeper''')
-flags.DEFINE_integer('E', 16, 'number of channels in output from ConvCaps3')
+flags.DEFINE_boolean('deeper', False, '''whether or not to go deeper''')
+flags.DEFINE_boolean('rescap', False, '''whether or not to go deeper with residual
+                      capsule routing''')
+flags.DEFINE_integer('E', 8, 'number of channels in output from ConvCaps3')
 flags.DEFINE_integer('F', 16, 'number of channels in output from ConvCaps4')
 flags.DEFINE_integer('G', 16, 'number of channels in output from ConvCaps5')
-flags.DEFINE_integer('H', 16, 'number of channels in output from ConvCaps5')
-flags.DEFINE_integer('I', 16, 'number of channels in output from ConvCaps5')
-flags.DEFINE_integer('J', 16, 'number of channels in output from ConvCaps5')
 flags.DEFINE_boolean('recon_loss', False, '''whether to apply reconstruction
                      loss''')
 flags.DEFINE_integer('X', 512, 'number of neurons in reconstructive layer 1')
@@ -248,27 +247,36 @@ from data_pipelines import mnist as data_mnist
 from data_pipelines import cifar10 as data_cifar10
 def get_create_inputs(dataset_name: str, mode="train"):
   
+  force_train_set = False
   if mode == "train":
     is_train = True
   else:
     # for dataset pipelines that don't have validation set up
     is_train = False
-    
+    if mode == "train_whole":
+      force_train_set = True
+   
   path = get_dataset_path(dataset_name)
   
   options = {'smallNORB':
-                 lambda: data_norb.create_inputs_norb(path, is_train),
+                 lambda: data_norb.create_inputs_norb(path, is_train, force_train_set),
              'mnist':
-                 lambda: data_mnist.create_inputs(is_train),
+                 lambda: data_mnist.create_inputs(is_train, force_train_set),
              'cifar10':
-                 lambda: data_cifar10.create_inputs(is_train)}
+                 lambda: data_cifar10.create_inputs(is_train, force_train_set)}
   return options[dataset_name]
 
 
 import models as mod
 def get_dataset_architecture(dataset_name: str):
-  options = {'smallNORB': mod.build_arch_smallnorb,
-             'baseline': mod.build_arch_baseline,
-             'mnist': mod.build_arch_smallnorb,
-             'cifar10': mod.build_arch_smallnorb}
-  return options[dataset_name]
+  # options = {'smallNORB': mod.build_arch_smallnorb,
+  #            'baseline': mod.build_arch_baseline,
+  #            'mnist': mod.build_arch_smallnorb,
+  #            'cifar10': mod.build_arch_smallnorb}
+  # return options[dataset_name]
+  if FLAGS.deeper == True:
+    return mod.build_arch_deepcap
+  if FLAGS.rescap == True:
+    return mod.build_arch_rescap
+  return mod.build_arch_smallnorb 
+
