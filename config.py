@@ -64,9 +64,12 @@ flags.DEFINE_integer('F', 16, 'number of channels in output from ConvCaps4')
 flags.DEFINE_integer('G', 16, 'number of channels in output from ConvCaps5')
 flags.DEFINE_boolean('recon_loss', False, '''whether to apply reconstruction
                      loss''')
+flags.DEFINE_integer('num_bg_classes', 0, '''number of background
+                      classes for decoder''')
 flags.DEFINE_integer('X', 512, 'number of neurons in reconstructive layer 1')
 flags.DEFINE_integer('Y', 1024, 'number of neurons in reconstructive layer 2')
-
+flags.DEFINE_boolean('zeroed_bg_reconstruction', False, '''whether to return
+                      counter factual reconstruction output on zeroed bg''')
 #------------------------------------------------------------------------------
 # ENVIRONMENT SETTINGS
 #------------------------------------------------------------------------------

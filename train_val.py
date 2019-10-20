@@ -518,7 +518,7 @@ def main(args):
           # Write summary for profiling
           if run_options is not None: 
             summary_writer.add_run_metadata(
-                run_metadata, 'step{:d}'.format(step))
+                run_metadata, 'epoch{:f}'.format(epoch_decimal))
           
           # Logging
           #logger.info('TRN'
@@ -545,7 +545,7 @@ def main(args):
         logger.info("Write Train Summary")
         with g_train.as_default():
           # Summaries from graph
-          summary_writer.add_summary(trn_summary_v, step)
+          summary_writer.add_summary(trn_summary_v, epoch)
           
       # SAVE MODEL
       if (step % SAVE_MODEL_FREQ) == 0:
@@ -598,7 +598,7 @@ def main(args):
           summary_train = tf.Summary()
           summary_train.value.add(tag="trn_acc", simple_value=ave_acc)
           summary_train.value.add(tag="trn_loss", simple_value=ave_loss)
-          summary_writer.add_summary(summary_train, step)
+          summary_writer.add_summary(summary_train, epoch)
           
 
         if dataset_size_val > 0: 
@@ -649,7 +649,7 @@ def main(args):
             summary_val = tf.Summary()
             summary_val.value.add(tag="val_acc", simple_value=ave_acc)
             summary_val.value.add(tag="val_loss", simple_value=ave_loss)
-            summary_writer.add_summary(summary_val, step)
+            summary_writer.add_summary(summary_val, epoch)
           
   # Close (main loop)
   sess_train.close()

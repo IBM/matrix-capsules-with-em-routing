@@ -146,7 +146,7 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
     # pose_in: (64, 5, 5, 32, 16)
     # activation_out: (64, 5)
     # pose_out: (64, 5, 16) 
-    activation_out, pose_out = lyr.fc_caps(
+    class_activation_out, class_pose_out = lyr.fc_caps(
         activation_in = activation,
         pose_in = pose,
         ncaps_out = num_classes,
@@ -158,33 +158,62 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
         affine_voting = FLAGS.affine_voting)
 
     if FLAGS.recon_loss:
-      class_predictions = tf.argmax(activation_out, axis=-1,
+      class_predictions = tf.argmax(class_activation_out, axis=-1,
                                     name="class_predictions")
       # [batch, num_classes]
       recon_mask = tf.one_hot(class_predictions, depth=num_classes,
                               on_value=True, off_value=False, dtype=tf.bool,
                               name="reconstruction_mask")
       # dim(poses) = [batch, num_classes, matrix_size]
-      decoder_input = tf.boolean_mask(pose_out, recon_mask, name="masked_pose")
+      class_input = tf.boolean_mask(class_pose_out, recon_mask, name="masked_pose")
+      if FLAGS.num_bg_classes > 0:
+        bg_activation, bg_pose = lyr.fc_caps(
+          activation_in=activation,
+          pose_in=pose,
+          ncaps_out=FLAGS.num_bg_classes,
+          name='bg_caps',
+          weights_regularizer=capsule_weights_regularizer,
+          drop_rate=FLAGS.drop_rate,
+          dropout=False,
+          dropconnect=FLAGS.dropconnect if is_train else False,
+          affine_voting=FLAGS.affine_voting)
+        weighted_bg = tf.multiply(bg_pose, tf.expand_dims(bg_activation, -1))
+        decoder_input = tf.concat([weighted_bg, class_input], 1)
+      else:
+        decoder_input = class_input
       output_size = int(np.prod(inp.get_shape()[1:]))
       recon_1 = slim.fully_connected(decoder_input, FLAGS.X,
                                      activation_fn=tf.nn.tanh,
                                      scope="recon_1")
       recon_2 = slim.fully_connected(recon_1, FLAGS.Y,
                                      activation_fn=tf.nn.tanh,
-                                     scope="recon_2") 
+                                     scope="recon_2")
       decoder_output = slim.fully_connected(recon_2, output_size,
                                             activation_fn=tf.nn.sigmoid,
-                                            scope="decoder_output")   
-      return {'scores': activation_out, 'pose_out': pose_out,
-              'decoder_out': decoder_output, 'input': inp}
-  return {'scores': activation_out, 'pose_out': pose_out}
+                                            scope="decoder_output")
+      out_dict = {'scores': class_activation_out, 'pose_out': class_pose_out,
+                  'decoder_out': decoder_output, 'input': inp}
+      if FLAGS.zeroed_bg_reconstruction:
+        scope.reuse_variables()
+        zeroed_bg_decoder_input = tf.concat([tf.zeros(weighted_bg.get_shape()), class_input], 1)
+        recon_1 = slim.fully_connected(zeroed_bg_decoder_input, FLAGS.X,
+                                       activation_fn=tf.nn.tanh,
+                                       scope="recon_1")
+        recon_2 = slim.fully_connected(recon_1, FLAGS.Y,
+                                       activation_fn=tf.nn.tanh,
+                                       scope="recon_2")
+        zeroed_bg_decoder_output = slim.fully_connected(recon_2, output_size,
+                                              activation_fn=tf.nn.sigmoid,
+                                              scope="decoder_output")
+        out_dict['zeroed_bg_decoder_out'] = zeroed_bg_decoder_output
+      return out_dict
+  return {'scores': class_activation_out, 'pose_out': class_pose_out}
 
 
 #------------------------------------------------------------------------------
 # CAPSNET FOR DEEPER
 #------------------------------------------------------------------------------
-def build_arch_deepcap(inp, is_train: bool, num_classes: int):
+def build_arch_deepcap(inp, is_train: bool, num_classes: int, set_bg_to_zero: bool=False):
   logger.info('input shape: {}'.format(inp.get_shape()))
   batch_size = int(inp.get_shape()[0])
   spatial_size = int(inp.get_shape()[1])
@@ -356,7 +385,7 @@ def build_arch_deepcap(inp, is_train: bool, num_classes: int):
     # pose_in: (64, 5, 5, 32, 16)
     # activation_out: (64, 5)
     # pose_out: (64, 5, 16) 
-    activation_out, pose_out = lyr.fc_caps(
+    class_activation_out, class_pose_out = lyr.fc_caps(
         activation_in = activation,
         pose_in = pose,
         ncaps_out = num_classes,
@@ -368,27 +397,45 @@ def build_arch_deepcap(inp, is_train: bool, num_classes: int):
         affine_voting = FLAGS.affine_voting)
 
     if FLAGS.recon_loss:
-      class_predictions = tf.argmax(activation_out, axis=-1,
+      class_predictions = tf.argmax(class_activation_out, axis=-1,
                                     name="class_predictions")
       # [batch, num_classes]
       recon_mask = tf.one_hot(class_predictions, depth=num_classes,
                               on_value=True, off_value=False, dtype=tf.bool,
                               name="reconstruction_mask")
       # dim(poses) = [batch, num_classes, matrix_size]
-      decoder_input = tf.boolean_mask(pose_out, recon_mask, name="masked_pose")
+      class_input = tf.boolean_mask(class_pose_out, recon_mask, name="masked_pose")
+      if FLAGS.num_bg_classes > 0:
+        if set_bg_to_zero:
+          weighted_bg = tf.zeros([batch_size, FLAGS.num_bg_classes, 16])
+        else:
+          bg_activation, bg_pose = lyr.fc_caps(
+            activation_in=activation,
+            pose_in=pose,
+            ncaps_out=FLAGS.num_bg_classes,
+            name='bg_caps',
+            weights_regularizer=capsule_weights_regularizer,
+            drop_rate=FLAGS.drop_rate,
+            dropout=False,
+            dropconnect=FLAGS.dropconnect if is_train else False,
+            affine_voting=FLAGS.affine_voting)
+          weighted_bg = tf.multiply(bg_pose, tf.expand_dims(bg_activation, -1))
+        decoder_input = tf.concat([weighted_bg, class_input], 1)
+      else:
+        decoder_input = class_input
       output_size = int(np.prod(inp.get_shape()[1:]))
       recon_1 = slim.fully_connected(decoder_input, FLAGS.X,
                                      activation_fn=tf.nn.tanh,
                                      scope="recon_1")
       recon_2 = slim.fully_connected(recon_1, FLAGS.Y,
                                      activation_fn=tf.nn.tanh,
-                                     scope="recon_2") 
+                                     scope="recon_2")
       decoder_output = slim.fully_connected(recon_2, output_size,
                                             activation_fn=tf.nn.sigmoid,
-                                            scope="decoder_output")   
-      return {'scores': activation_out, 'pose_out': pose_out,
+                                            scope="decoder_output")
+      return {'scores': class_activation_out, 'pose_out': class_pose_out,
               'decoder_out': decoder_output, 'input': inp}
-  return {'scores': activation_out, 'pose_out': pose_out}
+  return {'scores': class_activation_out, 'pose_out': class_pose_out}
 
 
 #------------------------------------------------------------------------------
@@ -708,15 +755,6 @@ def build_arch_baseline(input, is_train: bool, num_classes: int):
 #------------------------------------------------------------------------------
 # LOSS FUNCTIONS
 #------------------------------------------------------------------------------
-
-# this one only works with capsule network, and only works when only one
-# class is activated
-def capsule_decoder(input_images, scores, poses,
-                    layer_1_size, layer_2_size,
-                    is_train):
- return decoder_output 
-
-
 def spread_loss(scores, y):
   """Spread loss.
   
@@ -816,7 +854,7 @@ def reconstruction_loss(input_images, decoder_output):
     output_size = int(np.prod(input_images.get_shape()[1:]))
     flat_images = tf.reshape(input_images, [-1, output_size])
     sqrd_diff = tf.square(flat_images - decoder_output)
-    # mean instead of sum so the loss is not magnified by image size
+    # grand mean instead of sum so the loss is not magnified by image size (consistent across sample) or batch size
     recon_loss = tf.reduce_mean(sqrd_diff)
   return recon_loss
 
