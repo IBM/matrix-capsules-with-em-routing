@@ -1,6 +1,6 @@
 # Implementation of "Matrix Capsules with EM Routing"
 
-A TensorFlow implementation of Hinton's paper [Matrix Capsules with EM Routing](https://openreview.net/pdf?id=HJWLfGWRb) by [Ashley Gritzman](https://github.com/ashleygritzman) from IBM Research AI.
+A TensorFlow implementation of Hinton's paper [Matrix Capsules with EM Routing](https://openreview.net/pdf?id=HJWLfGWRb) by [Perry Deng](https://github.com/PerryXDeng).
 
 E-mail: [perry.deng@mail.rit.edu](mailto:perry.deng@mail.rit.edu)
 
