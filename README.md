@@ -2,7 +2,7 @@
 
 A TensorFlow implementation of Hinton's paper [Matrix Capsules with EM Routing](https://openreview.net/pdf?id=HJWLfGWRb) by [Ashley Gritzman](https://github.com/ashleygritzman) from IBM Research AI.
 
-E-mail: [perry.deng@rit.edu](mailto:perry.deng@rit.edu)
+E-mail: [perry.deng@mail.rit.edu](mailto:perry.deng@mail.rit.edu)
 
 This implementation experiments with modifications to Hinton's implementation, the main ones being:
 
