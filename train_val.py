@@ -545,7 +545,7 @@ def main(args):
         logger.info("Write Train Summary")
         with g_train.as_default():
           # Summaries from graph
-          summary_writer.add_summary(trn_summary_v, epoch)
+          summary_writer.add_summary(trn_summary_v, step)
           
       # SAVE MODEL
       if (step % SAVE_MODEL_FREQ) == 0:
