@@ -204,7 +204,7 @@ def fc_caps(activation_in,
       assert (
         votes.get_shape() == 
         [batch_size * child_space * child_space, child_caps, ncaps_out, 16])
-      logger.info('class_caps votes original shape: {}'
+      logger.info(name + ' votes original shape: {}'
                   .format(votes.get_shape()))
 
     with tf.variable_scope('coord_add') as scope:
@@ -229,7 +229,7 @@ def fc_caps(activation_in,
       
       spatial_routing_matrix = utl.create_routing_map(child_space=1, k=1, s=1)
 
-      logger.info('class_caps votes in to routing shape: {}'
+      logger.info(name + ' votes in to routing shape: {}'
             .format(votes_flat.get_shape()))
       
       pose_out, activation_out = em.em_routing(votes_flat, 
@@ -243,9 +243,9 @@ def fc_caps(activation_in,
     activation_out = tf.squeeze(activation_out, name="activation_out")
     pose_out = tf.squeeze(pose_out, name="pose_out")
 
-    logger.info('class_caps activation shape: {}'
+    logger.info(name + ' activation shape: {}'
                 .format(activation_out.get_shape()))
-    logger.info('class_caps pose shape: {}'.format(pose_out.get_shape()))
+    logger.info(name + ' pose shape: {}'.format(pose_out.get_shape()))
 
     tf.summary.histogram("activation_out", activation_out)
       

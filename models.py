@@ -178,7 +178,9 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
           dropconnect=FLAGS.dropconnect if is_train else False,
           affine_voting=FLAGS.affine_voting)
         weighted_bg = tf.multiply(bg_pose, tf.expand_dims(bg_activation, -1))
-        decoder_input = tf.concat([weighted_bg, class_input], 1)
+        bg_size = int(np.prod(weighted_bg.get_shape()[1:]))
+        flattened_bg = tf.reshape(weighted_bg, [batch_size, bg_size])
+        decoder_input = tf.concat([flattened_bg, class_input], 1)
       else:
         decoder_input = class_input
       output_size = int(np.prod(inp.get_shape()[1:]))
