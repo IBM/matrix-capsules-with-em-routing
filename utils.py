@@ -171,7 +171,7 @@ def compute_votes(poses_i, o, regularizer, affine_voting=True, tag=False,
     b = slim.model_variable('b', shape=kernel_weights_dim, 
                             dtype=tf.float32, 
                             initializer=tf.zeros_initializer(),
-                            regularizer=regularizer)
+                            regularizer=None)
     b = tf.tile(b, tile_coefficients)
     votes = tf.add(votes, b)
   
