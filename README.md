@@ -10,6 +10,7 @@ This implementation experiments with modifications to Hinton's implementation, t
 2. dropout and dropconnect capsule layers
 3. unsupervised background class reconstruction
 4. deep residual capsule network on larger images
+5. detection of adversarial patches using reconstruction networks
 
 # Usage
 
