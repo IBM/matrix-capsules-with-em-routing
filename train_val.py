@@ -556,8 +556,8 @@ def main(args):
             os.makedirs(train_checkpoint_dir)
 
           # Save ckpt from train session
-          ckpt_path = os.path.join(train_checkpoint_dir, 'model.ckpt')
-          saver.save(sess_train, ckpt_path, global_step=epoch)
+          ckpt_path = os.path.join(train_checkpoint_dir, 'model.ckpt' + str(epoch))
+          saver.save(sess_train, ckpt_path, global_step=step)
       if (step % VAL_FREQ) == 0:
         # calculate metrics every epoch
         with g_trn_acc.as_default():
