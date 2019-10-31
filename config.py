@@ -71,6 +71,16 @@ flags.DEFINE_integer('Y', 1024, 'number of neurons in reconstructive layer 2')
 flags.DEFINE_boolean('zeroed_bg_reconstruction', False, '''whether to return
                       counter factual reconstruction output on zeroed bg''')
 #------------------------------------------------------------------------------
+# ADVERSARIAL PATCH PARAMETERS
+#------------------------------------------------------------------------------
+# also modify recon_loss and recon_loss_lambda to adjust patch optimization parameters
+flags.DEFINE_list('patch_resolution', 28, '''square root of the patch resolution''')
+flags.DEFINE_float('max_rotation', 22.5, '''max degree of rotation in random
+                                         patch transformations''')
+flags.DEFINE_float('scale_min', 0.3, '''patch scaling minimum''')
+flags.DEFINE_float('scale_max', 1.5, '''patch scaling maximum''')
+flags.DEFINE_integer('target_class', 0, '''the targeted class for adversarial patch''')
+#------------------------------------------------------------------------------
 # ENVIRONMENT SETTINGS
 #------------------------------------------------------------------------------
 flags.DEFINE_integer('num_gpus', 1, 'number of GPUs')

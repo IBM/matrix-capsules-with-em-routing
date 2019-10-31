@@ -1,7 +1,7 @@
 """
 License: Apache 2.0
-Author: Ashley Gritzman
-E-mail: ashley.gritzman@za.ibm.com
+Author: Perry Deng
+E-mail: perry.deng@mail.rit.edu
 """
 
 # Public modules
@@ -21,6 +21,7 @@ import config as conf
 import models as mod
 import metrics as met
 import utils as utl
+import math
 
 # Get logger that has already been created in config.py
 import daiquiri
@@ -92,8 +93,8 @@ def main(args):
     # "We use an exponential decay with learning rate: 3e-3, decay_steps: 20000,     # decay rate: 0.96."
     # https://openreview.net/forum?id=HJWLfGWRb&noteId=ryxTPFDe2X
     lrn_rate = tf.train.exponential_decay(learning_rate = FLAGS.lrn_rate, 
-                        global_step = global_step, 
-                        decay_steps = 20000, 
+                        global_step = global_step,
+                        decay_steps = 20000,
                         decay_rate = 0.96)
     tf.summary.scalar('learning_rate', lrn_rate)
     opt = tf.train.AdamOptimizer(learning_rate=lrn_rate)
@@ -134,11 +135,11 @@ def main(args):
           # device='/cpu:0'):
           with slim.arg_scope([slim.variable], device='/cpu:0'):
             loss, logits = tower_fn(
-                build_arch, 
-                splits_x[i], 
-                splits_labels[i], 
-                scope, 
-                num_classes, 
+                build_arch,
+                splits_x[i],
+                splits_labels[i],
+                scope,
+                num_classes,
                 reuse_variables=reuse_variables,
                 is_train=True)
           
@@ -656,13 +657,149 @@ def main(args):
   sess_val.close()
   sys.exit()
 
-  
-def tower_fn(build_arch, 
-             x, 
-             y, 
-             scope, 
-             num_classes, 
-             is_train=True, 
+def _pad_and_tile_patch(patch):
+  """
+  https://github.com/tensorflow/cleverhans/blob/master/examples/adversarial_patch/AdversarialPatch.ipynb
+  :param patch:
+  :return:
+  """
+  # Calculate the exact padding
+  # Image shape req'd because it is sometimes 299 sometimes 224
+
+  # padding is the amount of space available on either side of the centered patch
+  # WARNING: This has been integer-rounded and could be off by one.
+  #          See _pad_and_tile_patch for usage
+  return tf.stack([patch] * FLAGS.batch_size)
+
+
+def _transform_vector(width, x_shift, y_shift, im_scale, rot_in_degrees):
+  """
+  https://github.com/tensorflow/cleverhans/blob/master/examples/adversarial_patch/AdversarialPatch.ipynb
+   If one row of transforms is [a0, a1, a2, b0, b1, b2, c0, c1],
+   then it maps the output point (x, y) to a transformed input point
+   (x', y') = ((a0 x + a1 y + a2) / k, (b0 x + b1 y + b2) / k),
+   where k = c0 x + c1 y + 1.
+   The transforms are inverted compared to the transform mapping input points to output points.
+  """
+
+  rot = float(rot_in_degrees) / 90. * (math.pi / 2)
+
+  # Standard rotation matrix
+  # (use negative rot because tf.contrib.image.transform will do the inverse)
+  rot_matrix = np.array(
+    [[math.cos(-rot), -math.sin(-rot)],
+     [math.sin(-rot), math.cos(-rot)]]
+  )
+
+  # Scale it
+  # (use inverse scale because tf.contrib.image.transform will do the inverse)
+  inv_scale = 1. / im_scale
+  xform_matrix = rot_matrix * inv_scale
+  a0, a1 = xform_matrix[0]
+  b0, b1 = xform_matrix[1]
+
+  # At this point, the image will have been rotated around the top left corner,
+  # rather than around the center of the image.
+  #
+  # To fix this, we will see where the center of the image got sent by our transform,
+  # and then undo that as part of the translation we apply.
+  x_origin = float(width) / 2
+  y_origin = float(width) / 2
+
+  x_origin_shifted, y_origin_shifted = np.matmul(
+    xform_matrix,
+    np.array([x_origin, y_origin]),
+  )
+
+  x_origin_delta = x_origin - x_origin_shifted
+  y_origin_delta = y_origin - y_origin_shifted
+
+  # Combine our desired shifts with the rotation-induced undesirable shift
+  a2 = x_origin_delta - (x_shift / (2 * im_scale))
+  b2 = y_origin_delta - (y_shift / (2 * im_scale))
+
+  # Return these values in the order that tf.contrib.image.transform expects
+  return np.array([a0, a1, a2, b0, b1, b2, 0, 0]).astype(np.float32)
+
+
+def _circle_mask(shape, sharpness = 40):
+  """Return a circular mask of a given shape
+  https://github.com/tensorflow/cleverhans/blob/master/examples/adversarial_patch/AdversarialPatch.ipynb"""
+  assert shape[0] == shape[1], "circle_mask received a bad shape: " + shape
+
+  diameter = shape[0]
+  x = np.linspace(-1, 1, diameter)
+  y = np.linspace(-1, 1, diameter)
+  xx, yy = np.meshgrid(x, y, sparse=True)
+  z = (xx**2 + yy**2) ** sharpness
+
+  mask = 1 - np.clip(z, -1, 1)
+  mask = np.expand_dims(mask, axis=2)
+  mask = np.broadcast_to(mask, shape).astype(np.float32)
+  return mask
+
+
+def _random_overlay(imgs, patch, scale_min, scale_max):
+  """Augment images with randomly transformed patch.
+  https://github.com/tensorflow/cleverhans/blob/master/examples/adversarial_patch/AdversarialPatch.ipynb
+
+  """
+  # Add padding
+  batch_size = tf.shape(imgs)[0]
+  max_rotation = FLAGS.max_rotation
+  image_shape = tf.shape(imgs)[1:]
+
+  image_mask = _circle_mask(image_shape)
+  image_mask = tf.stack([image_mask] * batch_size)
+  padded_patch = tf.stack([patch] * batch_size)
+
+  def _random_transformation(scale_mi, scale_ma, width):
+    im_scale = np.random.uniform(low=scale_mi, high=scale_ma)
+
+    padding_after_scaling = (1 - im_scale) * width
+    x_delta = np.random.uniform(-padding_after_scaling, padding_after_scaling)
+    y_delta = np.random.uniform(-padding_after_scaling, padding_after_scaling)
+
+    rot = np.random.uniform(-max_rotation, max_rotation)
+
+    return _transform_vector(width,
+                             x_shift=x_delta,
+                             y_shift=y_delta,
+                             im_scale=im_scale,
+                             rot_in_degrees=rot)
+
+  transform_vecs = [tf.py_func(_random_transformation, [scale_min, scale_max, image_shape[0]],
+                    tf.float32).set_shape([8]) for _ in range(batch_size)]
+
+  image_mask = tf.contrib.image.transform(image_mask, transform_vecs, "BILINEAR")
+  padded_patch = tf.contrib.image.transform(padded_patch, transform_vecs, "BILINEAR")
+
+  inverted_mask = (1 - image_mask)
+  return imgs * inverted_mask + padded_patch * image_mask
+
+
+def patch_inputs(x, is_train=True, reuse=None):
+  with tf.variable_scope(tf.get_variable_scope(), reuse=reuse):
+    with tf.variable_scope('adversarial_patch') as scope:
+      patch_resolution = FLAGS.patch_resolution
+      img_channels = tf.shape(x)[3]
+      patch_shape = [patch_resolution, patch_resolution, img_channels]
+      patch_params = tf.get_variable("patch_params", patch_shape, trainable=is_train,
+                                     initializer=tf.random_normal_initializer(mean=0, stddev=1),
+                                     regularizer=None)
+      # box constraint the patch scalars into (0, 1) using change of variables approach
+      patch_node = tf.math.scalar_mul(0.5, tf.math.add(tf.math.tanh(patch_params), 1), name="patch")
+      patched_x = _random_overlay(x, patch_node, FLAGS.scale_min, FLAGS.scale_max)
+      patched_x = tf.clip_by_value(patched_x, clip_value_min=0, clip_value_max=1)
+  return patched_x, patch_node
+
+
+def tower_fn(build_arch,
+             x,
+             y,
+             scope,
+             num_classes,
+             is_train=True,
              reuse_variables=None):
   """Model tower to be run on each GPU.
   
@@ -690,8 +827,11 @@ def tower_fn(build_arch,
   """
   
   with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables):
+    x, patch = patch_inputs(x, is_train=is_train, reuse=reuse_variables)
     output = build_arch(x, is_train, num_classes=num_classes)
-  loss = mod.total_loss(output, y)
+  minibatch_size = tf.shape(y)[0]
+  targets = tf.fill(dims=[minibatch_size, 1], value=FLAGS.target_class, name="adversarial_targets")
+  loss = mod.total_loss(output, targets)
   return loss, output['scores']
 
 

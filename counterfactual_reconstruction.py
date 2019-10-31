@@ -1,7 +1,7 @@
 """
 License: Apache 2.0
-Author: Ashley Gritzman
-E-mail: ashley.gritzman@za.ibm.com
+Author: Perry Deng
+E-mail: perry.deng@mail.rit.edu
 
 Credits:
   Suofei Zhang & Hang Yu, "Matrix-Capsules-EM-Tensorflow"
