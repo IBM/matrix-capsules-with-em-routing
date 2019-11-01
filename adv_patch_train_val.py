@@ -134,7 +134,7 @@ def main(args):
           #with slim.arg_scope([slim.model_variable, slim.variable],
           # device='/cpu:0'):
           with slim.arg_scope([slim.variable], device='/cpu:0'):
-            loss, logits = tower_fn(
+            loss, logits, x, patch, target_labels = tower_fn(
                 build_arch,
                 splits_x[i],
                 splits_labels[i],
@@ -147,7 +147,9 @@ def main(args):
           reuse_variables = True
           
           # Compute gradients for one GPU
-          grads = opt.compute_gradients(loss)
+          patch_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
+                                           "adversarial_patch/patch_params")
+          grads = opt.compute_gradients(loss, var_list=patch_params)
           
           # Keep track of the gradients across all towers.
           tower_grads.append(grads)
@@ -161,26 +163,26 @@ def main(args):
     
     # We must calculate the mean of each gradient. Note that this is the
     # synchronization point across all towers.
-    grad = average_gradients(tower_grads)
+    grads = average_gradients(tower_grads)
     
     # See: https://stackoverflow.com/questions/40701712/how-to-check-nan-in-
     # gradients-in-tensorflow-when-updating
     grad_check = ([tf.check_numerics(g, message='Gradient NaN Found!') 
-                      for g, _ in grad if g is not None] 
+                      for g, _ in grads if g is not None]
                   + [tf.check_numerics(loss, message='Loss NaN Found')])
     
     # Apply the gradients to adjust the shared variables
     with tf.control_dependencies(grad_check):
       update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
       with tf.control_dependencies(update_ops):
-        train_op = opt.apply_gradients(grad, global_step=global_step)
+        train_op = opt.apply_gradients(grads, global_step=global_step)
     
     # Calculate mean loss     
     loss = tf.reduce_mean(tower_losses)
     
     # Calculate accuracy
     logits = tf.concat(tower_logits, axis=0)
-    acc = met.accuracy(logits, batch_labels)
+    acc = met.accuracy(logits, target_labels)
     
     # Prepare predictions and one-hot labels
     probs = tf.nn.softmax(logits=logits)
@@ -202,7 +204,7 @@ def main(args):
     
     # Logging
     tf.summary.scalar('batch_loss', loss)
-    tf.summary.scalar('batch_acc', acc)
+    tf.summary.scalar('batch_success_rate', acc)
 
     # Set Saver
     # AG 26/09/2018: Save all variables including Adam so that we can continue 
@@ -257,7 +259,7 @@ def main(args):
       with tf.device('/gpu:%d' % i):
         with tf.name_scope('tower_%d' % i) as scope:
           with slim.arg_scope([slim.variable], device='/cpu:0'):
-            loss, logits = tower_fn(
+            loss, logits, x, patch, target_labels = tower_fn(
                 build_arch, 
                 splits_x[i], 
                 splits_labels[i], 
@@ -279,8 +281,8 @@ def main(args):
     logits = tf.concat(tower_logits, axis=0)
     
     # Calculate metrics
-    train_set_loss = mod.spread_loss(logits, batch_labels)
-    train_set_acc = met.accuracy(logits, batch_labels)
+    train_set_loss = mod.spread_loss(logits, target_labels)
+    train_set_acc = met.accuracy(logits, target_labels)
     
     # Prepare predictions and one-hot labels
     train_set_probs = tf.nn.softmax(logits=logits)
@@ -302,7 +304,7 @@ def main(args):
     saver = tf.train.Saver(max_to_keep=None)
     
     tf.summary.scalar("train_set_loss", train_set_loss)
-    tf.summary.scalar("train_set_acc", train_set_acc)
+    tf.summary.scalar("train_set_success_rate", train_set_acc)
     trn_acc_summary = tf.summary.merge_all()
   
   if dataset_size_val > 0: 
@@ -346,7 +348,7 @@ def main(args):
         with tf.device('/gpu:%d' % i):
           with tf.name_scope('tower_%d' % i) as scope:
             with slim.arg_scope([slim.variable], device='/cpu:0'):
-              loss, logits = tower_fn(
+              loss, logits, x, patch, target_labels = tower_fn(
                   build_arch, 
                   splits_x[i], 
                   splits_labels[i], 
@@ -368,8 +370,8 @@ def main(args):
       logits = tf.concat(tower_logits, axis=0)
       
       # Calculate metrics
-      val_loss = mod.spread_loss(logits, batch_labels)
-      val_acc = met.accuracy(logits, batch_labels)
+      val_loss = mod.spread_loss(logits, target_labels)
+      val_acc = met.accuracy(logits, target_labels)
       
       # Prepare predictions and one-hot labels
       val_probs = tf.nn.softmax(logits=logits)
@@ -390,7 +392,7 @@ def main(args):
       val_read = {}
       
       tf.summary.scalar("val_loss", val_loss)
-      tf.summary.scalar("val_acc", val_acc)
+      tf.summary.scalar("val_success_rate", val_acc)
         
       # Saver
       saver = tf.train.Saver(max_to_keep=None)
@@ -829,10 +831,9 @@ def tower_fn(build_arch,
   with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables):
     x, patch = patch_inputs(x, is_train=is_train, reuse=reuse_variables)
     output = build_arch(x, is_train, num_classes=num_classes)
-  minibatch_size = tf.shape(y)[0]
-  targets = tf.fill(dims=[minibatch_size, 1], value=FLAGS.target_class, name="adversarial_targets")
+  targets = tf.fill(dims=tf.shape(y), value=FLAGS.target_class, name="adversarial_targets")
   loss = mod.total_loss(output, targets)
-  return loss, output['scores']
+  return loss, output['scores'], x, patch, targets
 
 
 def average_gradients(tower_grads):
