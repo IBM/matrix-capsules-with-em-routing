@@ -46,6 +46,7 @@ flags.DEFINE_boolean('affine_voting', True, '''whether to use affine instead
 flags.DEFINE_float('drop_rate', 0.5, 'proportion of routes or capsules dropped')
 flags.DEFINE_boolean('dropout', False, '''whether to apply dropout''')
 flags.DEFINE_boolean('dropconnect', False, '''whether to apply dropconnect''')
+flags.DEFINE_boolean('dropout_extra', False, '''whether to apply extra dropout''')
 #------------------------------------------------------------------------------
 # ARCHITECTURE PARAMETERS
 #------------------------------------------------------------------------------
@@ -74,7 +75,8 @@ flags.DEFINE_boolean('zeroed_bg_reconstruction', False, '''whether to return
 # ADVERSARIAL PATCH PARAMETERS
 #------------------------------------------------------------------------------
 # also modify recon_loss and recon_loss_lambda to adjust patch optimization parameters
-flags.DEFINE_list('patch_resolution', 28, '''square root of the patch resolution''')
+flags.DEFINE_boolean('new_patch', False, '''whether to start training a new patch from ckpt,
+                                         which excludes restoring of certain variables''')
 flags.DEFINE_float('max_rotation', 22.5, '''max degree of rotation in random
                                          patch transformations''')
 flags.DEFINE_float('scale_min', 0.3, '''patch scaling minimum''')

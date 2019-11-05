@@ -4,7 +4,6 @@ Author: Perry Deng
 E-mail: perry.deng@mail.rit.edu
 """
 
-# Public modules
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 from tensorflow.python import debug as tf_debug # for debugging
@@ -15,7 +14,6 @@ import sys
 import os
 import re   # for regular expressions
 
-# My modules
 from config import FLAGS
 import config as conf
 import models as mod
@@ -26,6 +24,10 @@ import math
 # Get logger that has already been created in config.py
 import daiquiri
 logger = daiquiri.getLogger(__name__)
+
+# for logging detached images
+from io import StringIO
+import matplotlib.pyplot as plt
 
 
 def main(args):
@@ -126,6 +128,7 @@ def main(args):
     tower_grads = []
     tower_losses = []
     tower_logits = []
+    tower_target_labels = []
     reuse_variables = None
     for i in range(FLAGS.num_gpus):
       with tf.device('/gpu:%d' % i):
@@ -148,12 +151,13 @@ def main(args):
           
           # Compute gradients for one GPU
           patch_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
-                                           "adversarial_patch/patch_params")
+                                           "patch_params")
           grads = opt.compute_gradients(loss, var_list=patch_params)
           
           # Keep track of the gradients across all towers.
           tower_grads.append(grads)
-          
+          tower_target_labels.append(target_labels)          
+
           # Keep track of losses and logits across for each tower
           tower_logits.append(logits)
           tower_losses.append(loss)
@@ -182,6 +186,7 @@ def main(args):
     
     # Calculate accuracy
     logits = tf.concat(tower_logits, axis=0)
+    target_labels = tf.concat(tower_target_labels, axis=0)
     acc = met.accuracy(logits, target_labels)
     
     # Prepare predictions and one-hot labels
@@ -254,6 +259,7 @@ def main(args):
     #--------------------------------------------------------------------------
     # Calculate the logits for each model tower
     tower_logits = []
+    tower_target_labels = []
     reuse_variables = None
     for i in range(FLAGS.num_gpus):
       with tf.device('/gpu:%d' % i):
@@ -273,13 +279,13 @@ def main(args):
           
           # Keep track of losses and logits across for each tower
           tower_logits.append(logits)
-          
+          tower_target_labels.append(target_labels)
           # Loss for each tower
           tf.summary.histogram("train_set_logits", logits)
     
     # Combine logits from all towers
     logits = tf.concat(tower_logits, axis=0)
-    
+    target_labels = tf.concat(tower_target_labels, axis=0)
     # Calculate metrics
     train_set_loss = mod.spread_loss(logits, target_labels)
     train_set_acc = met.accuracy(logits, target_labels)
@@ -343,6 +349,7 @@ def main(args):
       #--------------------------------------------------------------------------
       # Calculate the logits for each model tower
       tower_logits = []
+      tower_target_labels = []
       reuse_variables = None
       for i in range(FLAGS.num_gpus):
         with tf.device('/gpu:%d' % i):
@@ -362,13 +369,17 @@ def main(args):
             
             # Keep track of losses and logits across for each tower
             tower_logits.append(logits)
-            
+            tower_target_labels.append(target_labels)
             # Loss for each tower
             tf.summary.histogram("val_logits", logits)
-      
+
+      # take patch and patched images from last tower
+      val_patch = patch
+      val_x = x
+
       # Combine logits from all towers
       logits = tf.concat(tower_logits, axis=0)
-      
+      target_labels = tf.concat(tower_target_labels, axis=0)
       # Calculate metrics
       val_loss = mod.spread_loss(logits, target_labels)
       val_acc = met.accuracy(logits, target_labels)
@@ -386,7 +397,8 @@ def main(args):
                      'probs' : val_probs,
                      'acc' : val_acc,
                      }
-      
+      val_images = {'patch' : val_patch,
+                    'x' : val_x} 
       # Reset and read operations for streaming metrics go here
       val_reset = {}
       val_read = {}
@@ -430,7 +442,7 @@ def main(args):
     # Restore previous checkpoint
     # AG 26/09/2018: where should this go???
     if FLAGS.load_dir is not None:
-      prev_step = load_training(saver, sess_train, FLAGS.load_dir)
+      prev_step = load_training(saver, sess_train, FLAGS.load_dir, opt)
     else:
       prev_step = 0
 
@@ -593,13 +605,13 @@ def main(args):
           ave_loss = loss_sum / num_batches_per_epoch
            
           logger.info('TRN ckpt-{}'.format(ckpt_num) 
-                      + ' avg_acc: {:.2f}%'.format(ave_acc*100) 
+                      + ' avg_success: {:.2f}%'.format(ave_acc*100) 
                       + ' avg_loss: {:.4f}'.format(ave_loss)
                      )
           
           logger.info("Write Train Summary")
           summary_train = tf.Summary()
-          summary_train.value.add(tag="trn_acc", simple_value=ave_acc)
+          summary_train.value.add(tag="trn_success", simple_value=ave_acc)
           summary_train.value.add(tag="trn_loss", simple_value=ave_loss)
           summary_writer.add_summary(summary_train, epoch)
           
@@ -619,9 +631,15 @@ def main(args):
             sess_val.run(val_reset)
             
             for i in range(num_batches_val):
-              val_metrics_v, val_summary_str_v = sess_val.run(
-                  [val_metrics, val_summary])
-               
+              if i == num_batches_val - 1:
+                # take a sample of patched images on the last validation batch
+                val_metrics_v, val_summary_str_v, val_images_v = sess_val.run(
+                    [val_metrics, val_summary, val_images])
+                x = val_images_v['x']
+                patch = val_images_v['patch']
+              else:
+                val_metrics_v, val_summary_str_v = sess_val.run(
+                    [val_metrics, val_summary])
               # Update
               accuracy_sum += val_metrics_v['acc']
               loss_sum += val_metrics_v['loss']
@@ -644,16 +662,18 @@ def main(args):
             ave_loss = loss_sum / num_batches_val
              
             logger.info('VAL ckpt-{}'.format(ckpt_num) 
-                        + ' avg_acc: {:.2f}%'.format(ave_acc*100) 
+                        + ' avg_success: {:.2f}%'.format(ave_acc*100) 
                         + ' avg_loss: {:.4f}'.format(ave_loss)
                        )
             
             logger.info("Write Val Summary")
             summary_val = tf.Summary()
-            summary_val.value.add(tag="val_acc", simple_value=ave_acc)
+            summary_val.value.add(tag="val_success", simple_value=ave_acc)
             summary_val.value.add(tag="val_loss", simple_value=ave_loss)
             summary_writer.add_summary(summary_val, epoch)
-          
+            log_images(summary_writer, "patch", [patch], epoch)
+            log_images(summary_writer, "patched_input", x, epoch)
+ 
   # Close (main loop)
   sess_train.close()
   sess_val.close()
@@ -747,9 +767,9 @@ def _random_overlay(imgs, patch, scale_min, scale_max):
 
   """
   # Add padding
-  batch_size = tf.shape(imgs)[0]
+  batch_size = imgs.get_shape().as_list()[0]
   max_rotation = FLAGS.max_rotation
-  image_shape = tf.shape(imgs)[1:]
+  image_shape = imgs.get_shape().as_list()[1:]
 
   image_mask = _circle_mask(image_shape)
   image_mask = tf.stack([image_mask] * batch_size)
@@ -769,10 +789,16 @@ def _random_overlay(imgs, patch, scale_min, scale_max):
                              y_shift=y_delta,
                              im_scale=im_scale,
                              rot_in_degrees=rot)
-
-  transform_vecs = [tf.py_func(_random_transformation, [scale_min, scale_max, image_shape[0]],
-                    tf.float32).set_shape([8]) for _ in range(batch_size)]
-
+  transform_vecs = []
+  for _ in range(batch_size):
+    random_xform_vector = tf.py_func(_random_transformation, [scale_min, scale_max, image_shape[0]],
+                                     tf.float32)
+    random_xform_vector.set_shape([8])
+    transform_vecs.append(random_xform_vector)
+  #transform_vecs = [tf.py_func(_random_transformation, [scale_min, scale_max, image_shape[0]],
+  #                  tf.float32).set_shape([8]) for _ in range(batch_size)]
+  #print("FUCKFUCKFUCKFUCKFUCK")
+  #print(transform_vecs)
   image_mask = tf.contrib.image.transform(image_mask, transform_vecs, "BILINEAR")
   padded_patch = tf.contrib.image.transform(padded_patch, transform_vecs, "BILINEAR")
 
@@ -782,17 +808,15 @@ def _random_overlay(imgs, patch, scale_min, scale_max):
 
 def patch_inputs(x, is_train=True, reuse=None):
   with tf.variable_scope(tf.get_variable_scope(), reuse=reuse):
-    with tf.variable_scope('adversarial_patch') as scope:
-      patch_resolution = FLAGS.patch_resolution
-      img_channels = tf.shape(x)[3]
-      patch_shape = [patch_resolution, patch_resolution, img_channels]
-      patch_params = tf.get_variable("patch_params", patch_shape, trainable=is_train,
-                                     initializer=tf.random_normal_initializer(mean=0, stddev=1),
-                                     regularizer=None)
-      # box constraint the patch scalars into (0, 1) using change of variables approach
-      patch_node = tf.math.scalar_mul(0.5, tf.math.add(tf.math.tanh(patch_params), 1), name="patch")
-      patched_x = _random_overlay(x, patch_node, FLAGS.scale_min, FLAGS.scale_max)
-      patched_x = tf.clip_by_value(patched_x, clip_value_min=0, clip_value_max=1)
+    # for this implementation, patch will have the same resolution as input
+    patch_shape = x.get_shape().as_list()[1:]
+    patch_params = tf.get_variable("patch_params", patch_shape, trainable=is_train,
+                                   initializer=tf.random_uniform_initializer(minval=-2, maxval=2),
+                                   regularizer=None)
+    # box constraint the patch scalars into (0, 1) using change of variables approach
+    patch_node = tf.math.scalar_mul(0.5, tf.math.add(tf.math.tanh(patch_params), 1), name="patch")
+    patched_x = _random_overlay(x, patch_node, FLAGS.scale_min, FLAGS.scale_max)
+    patched_x = tf.clip_by_value(patched_x, clip_value_min=0, clip_value_max=1)
   return patched_x, patch_node
 
 
@@ -831,7 +855,7 @@ def tower_fn(build_arch,
   with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables):
     x, patch = patch_inputs(x, is_train=is_train, reuse=reuse_variables)
     output = build_arch(x, is_train, num_classes=num_classes)
-  targets = tf.fill(dims=tf.shape(y), value=FLAGS.target_class, name="adversarial_targets")
+  targets = tf.fill(dims=y.get_shape().as_list(), value=FLAGS.target_class, name="adversarial_targets")
   loss = mod.total_loss(output, targets)
   return loss, output['scores'], x, patch, targets
 
@@ -898,7 +922,7 @@ def extract_step(path):
   return int(file_name.split('-')[-1])
 
 
-def load_training(saver, session, load_dir):
+def load_training(saver, session, load_dir, optimizer=None):
   """Loads a saved model into current session or initializes the directory.
   
   If there is no functioning saved model or FLAGS.restart is set, cleans the
@@ -923,6 +947,13 @@ def load_training(saver, session, load_dir):
   if tf.gfile.Exists(checkpoint_dir):
     ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
     if ckpt and ckpt.model_checkpoint_path:
+      restored_variables = tf.get_collection_ref(tf.GraphKeys.GLOBAL_VARIABLES)
+      if FLAGS.new_patch:
+        restored_variables = [v for v in restored_variables if "patch_params" not in v.name]
+        for optim_var in optimizer.variables():
+          excluded = optim_var.name
+          restored_variables = [v for v in restored_variables if excluded not in v.name]
+        saver = tf.train.Saver(restored_variables, max_to_keep=None)
       saver.restore(session, ckpt.model_checkpoint_path)
       prev_step = extract_step(ckpt.model_checkpoint_path)
       logger.info("Restored checkpoint")
@@ -955,7 +986,33 @@ def find_checkpoint(load_dir, seen_step):
     if int(global_step) != seen_step:
       return int(global_step), ckpt.model_checkpoint_path
   return -1, None
-          
+
+
+def log_images(writer, tag, images, step, bound=8):
+   """logs a list of detached images."""
+
+   im_summaries = []
+   for nr, img in enumerate(images):
+     if nr == bound:
+       break
+     # Write the image to a string
+     s = StringIO()
+     if len(img.shape) == 3 and img.shape[2] == 1:
+       img = np.squeeze(img, axis=-1)
+     plt.imsave(s, img, format='png')
+
+     # Create an Image object
+     img_sum = tf.Summary.Image(encoded_image_string=s.getvalue(),
+                                height=img.shape[0],
+                                width=img.shape[1])
+     # Create a Summary value
+     im_summaries.append(tf.Summary.Value(tag='%s/%d' % (tag, nr),
+                                          image=img_sum))
+
+   # Create and write Summary
+   summary = tf.Summary(value=im_summaries)
+   writer.add_summary(summary, step)          
+
 
 if __name__ == "__main__":
   tf.app.run()

@@ -121,6 +121,8 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
         ncaps_out = FLAGS.C,
         name = 'lyr.conv_caps1',
         weights_regularizer = capsule_weights_regularizer,
+        drop_rate = FLAGS.drop_rate,
+        dropout = FLAGS.dropout_extra if is_train else False,
         affine_voting = FLAGS.affine_voting)
     
     #----- Conv Caps 2 -----#
