@@ -26,7 +26,7 @@ import daiquiri
 logger = daiquiri.getLogger(__name__)
 
 # for logging detached images
-from io import StringIO
+from io import BytesIO
 import matplotlib.pyplot as plt
 
 
@@ -856,7 +856,12 @@ def tower_fn(build_arch,
     x, patch = patch_inputs(x, is_train=is_train, reuse=reuse_variables)
     output = build_arch(x, is_train, num_classes=num_classes)
   targets = tf.fill(dims=y.get_shape().as_list(), value=FLAGS.target_class, name="adversarial_targets")
-  loss = mod.total_loss(output, targets)
+  if FLAGS.carliniwagner:
+    # carlini wagner adversarial objective
+    loss = mod.carlini_wagner_loss(output, targets, num_classes)
+  else:
+    # default hinge loss from Hinton et al
+    loss = mod.total_loss(output, targets)
   return loss, output['scores'], x, patch, targets
 
 
@@ -996,13 +1001,13 @@ def log_images(writer, tag, images, step, bound=8):
      if nr == bound:
        break
      # Write the image to a string
-     s = StringIO()
+     buffr = BytesIO()
      if len(img.shape) == 3 and img.shape[2] == 1:
        img = np.squeeze(img, axis=-1)
-     plt.imsave(s, img, format='png')
+     plt.imsave(buffr, img, format='png')
 
      # Create an Image object
-     img_sum = tf.Summary.Image(encoded_image_string=s.getvalue(),
+     img_sum = tf.Summary.Image(encoded_image_string=buffr.getvalue(),
                                 height=img.shape[0],
                                 width=img.shape[1])
      # Create a Summary value

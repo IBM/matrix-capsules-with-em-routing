@@ -853,13 +853,15 @@ def cross_ent_loss(logits, y):
   return loss
 
 
-def reconstruction_loss(input_images, decoder_output):
+def reconstruction_loss(input_images, decoder_output, batch_reduce=True):
   with tf.variable_scope('reconstruction_loss') as scope:
     output_size = int(np.prod(input_images.get_shape()[1:]))
     flat_images = tf.reshape(input_images, [-1, output_size])
     sqrd_diff = tf.square(flat_images - decoder_output)
-    # grand mean instead of sum so the loss is not magnified by image size (consistent across sample) or batch size
-    recon_loss = tf.reduce_mean(sqrd_diff)
+    if batch_reduce:
+      recon_loss = tf.reduce_mean(sqrd_diff)
+    else:
+      recon_loss = tf.reduce_mean(sqrd_diff, axis=-1)
   return recon_loss
 
  
@@ -899,6 +901,38 @@ def total_loss(output, y):
       total_loss += reg_loss
       tf.summary.scalar('regularization_loss', reg_loss)
     
+    if FLAGS.recon_loss:
+      # Capsule Reconstruction
+      x = output["input"]
+      decoder_output = output["decoder_out"]
+      recon_loss = FLAGS.recon_loss_lambda * reconstruction_loss(x,
+                                                 decoder_output)
+      total_loss += recon_loss
+      tf.summary.scalar('reconstruction_loss', recon_loss)
+  return total_loss
+
+
+def carlini_wagner_loss(output, y, num_classes):
+  # the cost function from Towards Evaluating the Robustness of Neural Networks
+  # without the pertubation norm which does not apply to adversarial patching
+  with tf.variable_scope('carlini_wagner_loss') as scope:
+    logits = output["scores"]
+    target_mask = tf.one_hot(y, depth=num_classes,
+                             on_value=True, off_value=False, dtype=tf.bool,
+                             name="target_mask")
+    non_target_mask= tf.logical_not(target_mask, name="non_target_mask")
+    target_logits = tf.boolean_mask(logits, target_mask, name="target_logits")
+    non_target_logits = tf.boolean_mask(logits, non_target_mask, name="non_target_logits")
+    max_non_target_logits = tf.reduce_max(non_target_logits, axis=-1,
+                                          name="max_non_target_logits")
+    adversarial_confidence = max_non_target_logits - target_logits
+    confidence_lowerbound = tf.fill(logits.get_shape()[0:-1],
+                                    FLAGS.adv_conf_thres * -1,
+                                    name="adversarial_confidence_lowerbound")
+    total_loss = tf.reduce_mean(tf.maximum(adversarial_confidence, confidence_lowerbound),
+                                name="CW_loss")
+    tf.summary.scalar('carlini_wagner_loss', total_loss)
+
     if FLAGS.recon_loss:
       # Capsule Reconstruction
       x = output["input"]
