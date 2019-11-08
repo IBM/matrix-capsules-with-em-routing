@@ -200,7 +200,7 @@ def load_or_save_hyperparams(train_dir=None):
     logger.info("Loaded parameters from file: {}".format(params_path))
 
   # Save parameters to file
-  elif FLAGS.mode == 'train': 
+  if FLAGS.mode == 'train': 
     params_dir_path = os.path.join(train_dir, "params")
     os.makedirs(params_dir_path, exist_ok=True)
     params_file_path = os.path.join(params_dir_path, "params.json")
