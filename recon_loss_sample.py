@@ -245,7 +245,7 @@ def main(args):
             'labels': test_labels_vals,
             'reconstruction_losses': test_recon_losses_vals
            }
-    csv_save_path = os.path.join(FLAGS.load_dir, "test", "recon_loss_csv")
+    csv_save_path = os.path.join(FLAGS.load_dir, "test", "recon_losses.csv")
     pd.DataFrame(data).to_csv(csv_save_path, index=False)
     logger.info('csv saved')
 
