@@ -71,7 +71,7 @@ def main(args):
   logger.info('Using dataset: {}'.format(FLAGS.dataset))
   
   # Dataset
-  dataset_size_test  = conf.get_dataset_size_test(FLAGS.dataset)
+  dataset_size_test  = conf.get_dataset_size_test(FLAGS.dataset) if FLAGS.partition == "test" else conf.get_dataset_size_train(FLAGS.dataset)
   num_classes        = conf.get_num_classes(FLAGS.dataset)
   create_inputs_test = conf.get_create_inputs(FLAGS.dataset, mode=FLAGS.partition)
 
