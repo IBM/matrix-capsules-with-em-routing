@@ -73,7 +73,7 @@ def main(args):
   # Dataset
   dataset_size_test  = conf.get_dataset_size_test(FLAGS.dataset)
   num_classes        = conf.get_num_classes(FLAGS.dataset)
-  create_inputs_test = conf.get_create_inputs(FLAGS.dataset, mode="test")
+  create_inputs_test = conf.get_create_inputs(FLAGS.dataset, mode=FLAGS.partition)
 
   
   #----------------------------------------------------------------------------
@@ -245,7 +245,7 @@ def main(args):
             'labels': test_labels_vals,
             'reconstruction_losses': test_recon_losses_vals
            }
-    csv_save_path = os.path.join(FLAGS.load_dir, "test", "recon_losses.csv")
+    csv_save_path = os.path.join(FLAGS.load_dir, FLAGS.partition, "recon_losses.csv")
     pd.DataFrame(data).to_csv(csv_save_path, index=False)
     logger.info('csv saved')
 
