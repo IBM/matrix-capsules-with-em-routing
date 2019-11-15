@@ -46,7 +46,7 @@ def main(args):
       3.4 Validate model
       
   Author:
-    Ashley Gritzman
+    Perry Deng
   """
   
   # Set reproduciable random seed
@@ -795,10 +795,7 @@ def _random_overlay(imgs, patch, scale_min, scale_max):
                                      tf.float32)
     random_xform_vector.set_shape([8])
     transform_vecs.append(random_xform_vector)
-  #transform_vecs = [tf.py_func(_random_transformation, [scale_min, scale_max, image_shape[0]],
-  #                  tf.float32).set_shape([8]) for _ in range(batch_size)]
-  #print("FUCKFUCKFUCKFUCKFUCK")
-  #print(transform_vecs)
+
   image_mask = tf.contrib.image.transform(image_mask, transform_vecs, "BILINEAR")
   padded_patch = tf.contrib.image.transform(padded_patch, transform_vecs, "BILINEAR")
 
@@ -814,8 +811,11 @@ def patch_inputs(x, is_train=True, reuse=None):
                                    initializer=tf.random_uniform_initializer(minval=-2, maxval=2),
                                    regularizer=None)
     # box constraint the patch scalars into (0, 1) using change of variables approach
-    patch_node = tf.math.scalar_mul(0.5, tf.math.add(tf.math.tanh(patch_params), 1), name="patch")
-    patched_x = _random_overlay(x, patch_node, FLAGS.scale_min, FLAGS.scale_max)
+    patch_node = tf.math.scalar_mul(0.5, tf.math.add(tf.math.tanh(patch_params), 1), name="default_patch")
+    patch_node = tf.placeholder_with_default(patch_node, shape=patch_shape, name="patch_feed")
+    scale_min = tf.placeholder_with_default(FLAGS.scale_min, shape=[], name="scale_min_feed")
+    scale_max = tf.placeholder_with_default(FLAGS.scale_max, shape=[], name="scale_max_feed")
+    patched_x = _random_overlay(x, patch_node, scale_min, scale_max)
     patched_x = tf.clip_by_value(patched_x, clip_value_min=0, clip_value_max=1)
   return patched_x, patch_node
 

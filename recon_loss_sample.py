@@ -26,7 +26,10 @@ logger = daiquiri.getLogger(__name__)
 from config import FLAGS
 import config as conf
 import models as mod
-import metrics as met
+
+
+from adv_patch_train_val import patch_inputs
+import matplotlib.pyplot as plt
 
 # for outputting sample to csv
 import pandas as pd
@@ -121,7 +124,7 @@ def main(args):
       with tf.device('/gpu:%d' % i):
         with tf.name_scope('tower_%d' % i) as scope:
           with slim.arg_scope([slim.variable], device='/cpu:0'):
-            logits, recon_losses = tower_fn(
+            logits, recon_losses, patch = tower_fn(
                 build_arch,
                 splits_x[i],
                 scope,
@@ -143,6 +146,8 @@ def main(args):
                    'labels': batch_labels,
                    'recon_losses': test_recon_losses
                    }
+    if FLAGS.adv_patch:
+      test_metrics['patch'] = patch
     
     # Reset and read operations for streaming metrics go here
     test_reset = {}
@@ -214,8 +219,6 @@ def main(args):
       saver.restore(sess_test, ckpt)
           
       # Reset accumulators
-      accuracy_sum = 0
-      loss_sum = 0
       sess_test.run(test_reset)
       test_preds_vals = []
       test_labels_vals = []
@@ -234,10 +237,16 @@ def main(args):
         test_preds_vals.append(test_metrics_v['preds'])
         test_labels_vals.append(test_metrics_v['labels'])
         test_recon_losses_vals.append(test_metrics_v['recon_losses'])
+
+    if FLAGS.adv_patch and FLAGS.save_patch:
+      patch = test_metrics_v['patch']
+      plt.imsave(os.path.join(FLAGS.load_dir, "test", "saved_patch.png"))
+
     logger.info('writing to csv')
     test_preds_vals = np.concatenate(test_preds_vals)
     test_labels_vals = np.concatenate(test_labels_vals)
     test_recon_losses_vals = np.concatenate(test_recon_losses_vals)
+
     print(test_preds_vals.shape)
     print(test_labels_vals.shape)
     print(test_recon_losses_vals.shape)
@@ -257,10 +266,13 @@ def tower_fn(build_arch,
              is_train=False, 
              reuse_variables=None): 
   with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables):
+    patch = None
+    if FLAGS.adv_patch:
+      x, patch = patch_inputs(x, is_train=is_train, reuse=reuse_variables)
     output = build_arch(x, is_train, num_classes=num_classes)
   decoder_out = output["decoder_out"]
   recon_loss = mod.reconstruction_loss(x, decoder_out, batch_reduce=False)
-  return output['scores'], recon_loss
+  return output['scores'], recon_loss, patch
  
 
 if __name__ == "__main__":

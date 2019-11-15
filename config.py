@@ -85,6 +85,10 @@ flags.DEFINE_integer('target_class', 0, '''the targeted class for adversarial pa
 flags.DEFINE_boolean('carliniwagner', True, '''whether to use carlini's adversarial loss''')
 flags.DEFINE_float('adv_conf_thres', 20, '''logit confidence of the adversarial example,
                                             default to 20 per C&W 17 for best transferability''')
+# for sampling reconstruction losses
+flags.DEFINE_boolean('adv_patch', True, '''whether to sample reconstruction losses with
+                                        adversarial patch at different scales''')
+flags.DEFINE_boolean('save_patch', False, '''whether to save the patch''')
 #------------------------------------------------------------------------------
 # ENVIRONMENT SETTINGS
 #------------------------------------------------------------------------------
