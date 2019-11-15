@@ -1,3 +1,6 @@
+# data samples
+*.csv
+
 # local run settings
 run*.sh
 
