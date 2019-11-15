@@ -226,10 +226,12 @@ def main(args):
       test_scales = []
 
       interval = 0.1 if FLAGS.adv_patch else 1
+      scale_min_feed = g_test.get_tensor_by_name("scale_min_feed")
+      scale_max_feed = g_test.get_tensor_by_name("scale_max_feed")
       for scale in np.arange(0, 1, interval):
         for i in range(num_batches_test):
-          out = sess_test.run(
-              [test_metrics])
+          feed_dict = {scale_min_feed:scale, scale_max_feed:scale}
+          out = sess_test.run([test_metrics], feed_dict=feed_dict)
           test_metrics_v = out[0]
 
           ckpt_num = re.split('-', ckpt)[-1]
