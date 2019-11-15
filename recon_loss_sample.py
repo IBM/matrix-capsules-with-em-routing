@@ -223,36 +223,42 @@ def main(args):
       test_preds_vals = []
       test_labels_vals = []
       test_recon_losses_vals = []
+      test_scales = []
 
-      for i in range(num_batches_test):
-        
-        out = sess_test.run(
-            [test_metrics])
-        test_metrics_v = out[0]
+      interval = 0.1 if FLAGS.adv_patch else 1
+      for scale in np.arange(0, 1, interval):
+        for i in range(num_batches_test):
+          out = sess_test.run(
+              [test_metrics])
+          test_metrics_v = out[0]
 
-        ckpt_num = re.split('-', ckpt)[-1]
-        logger.info('TEST ckpt-{}'.format(ckpt_num) 
-            + ' bch-{:d}'.format(i) 
-            )
-        test_preds_vals.append(test_metrics_v['preds'])
-        test_labels_vals.append(test_metrics_v['labels'])
-        test_recon_losses_vals.append(test_metrics_v['recon_losses'])
+          ckpt_num = re.split('-', ckpt)[-1]
+          logger.info('TEST ckpt-{}'.format(ckpt_num)
+              + ' bch-{:d}'.format(i)
+              )
+          test_preds_vals.append(test_metrics_v['preds'])
+          test_labels_vals.append(test_metrics_v['labels'])
+          test_recon_losses_vals.append(test_metrics_v['recon_losses'])
+          test_scales.append(np.full(test_metrics_v['preds'].shape, fill_value=scale))
 
     if FLAGS.adv_patch and FLAGS.save_patch:
       patch = test_metrics_v['patch']
-      plt.imsave(os.path.join(FLAGS.load_dir, "test", "saved_patch.png"))
+      plt.imsave(os.path.join(FLAGS.load_dir, "test", "saved_patch.png"), patch,
+                 vmin=0, vmax=1, format='png')
 
     logger.info('writing to csv')
     test_preds_vals = np.concatenate(test_preds_vals)
     test_labels_vals = np.concatenate(test_labels_vals)
     test_recon_losses_vals = np.concatenate(test_recon_losses_vals)
+    test_scales = np.concatenate(test_scales)
 
     print(test_preds_vals.shape)
     print(test_labels_vals.shape)
     print(test_recon_losses_vals.shape)
     data = {'predictions': test_preds_vals,
             'labels': test_labels_vals,
-            'reconstruction_losses': test_recon_losses_vals
+            'reconstruction_losses': test_recon_losses_vals,
+            'scales': test_scales
            }
     csv_save_path = os.path.join(FLAGS.load_dir, FLAGS.partition, "recon_losses.csv")
     pd.DataFrame(data).to_csv(csv_save_path, index=False)

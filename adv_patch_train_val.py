@@ -1004,7 +1004,7 @@ def log_images(writer, tag, images, step, bound=8):
      buffr = BytesIO()
      if len(img.shape) == 3 and img.shape[2] == 1:
        img = np.squeeze(img, axis=-1)
-     plt.imsave(buffr, img, format='png')
+     plt.imsave(buffr, img, vmin=0, vmax=1, format='png')
 
      # Create an Image object
      img_sum = tf.Summary.Image(encoded_image_string=buffr.getvalue(),
