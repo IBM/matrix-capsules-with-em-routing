@@ -34,6 +34,8 @@ import matplotlib.pyplot as plt
 # for outputting sample to csv
 import pandas as pd
 
+# load png patch
+from PIL import Image
 
 def main(args):
   
@@ -120,13 +122,24 @@ def main(args):
     tower_logits = []
     tower_recon_losses = []
     reuse_variables = None
+    with tf.device("/cpu:0"):
+      scale_min_feed = tf.placeholder(tf.float32, shape=[], name="scale_min_feed")
+      scale_max_feed = tf.placeholder(tf.float32, shape=[], name="scale_max_feed")
+    patch_feed = None
+    if FLAGS.patch_path:
+      patch_feed = tf.placeholder(tf.float32,
+                                  shape=batch_x.get_shape().as_list()[-3:],
+                                  name="patch_feed")
     for i in range(FLAGS.num_gpus):
       with tf.device('/gpu:%d' % i):
         with tf.name_scope('tower_%d' % i) as scope:
           with slim.arg_scope([slim.variable], device='/cpu:0'):
-            logits, recon_losses, patch = tower_fn(
+            logits, recon_losses, patch_node = tower_fn(
                 build_arch,
                 splits_x[i],
+                scale_min_feed,
+                scale_max_feed,
+                patch_feed,
                 scope,
                 num_classes,
                 reuse_variables=reuse_variables, 
@@ -134,20 +147,21 @@ def main(args):
 
           # Don't reuse variable for first GPU, but do reuse for others
           reuse_variables = True
-          
           # Keep track of losses and logits across for each tower
           tower_logits.append(logits)
           tower_recon_losses.append(recon_losses)
     # Combine logits from all towers
-    test_logits = tf.concat(tower_logits, axis=0)
-    test_preds = tf.argmax(test_logits, axis=-1)
-    test_recon_losses = tf.concat(tower_recon_losses, axis=0)
-    test_metrics = {'preds': test_preds,
-                   'labels': batch_labels,
-                   'recon_losses': test_recon_losses
-                   }
+    test_metrics = {}
+    if not FLAGS.save_patch:
+      test_logits = tf.concat(tower_logits, axis=0)
+      test_preds = tf.argmax(test_logits, axis=-1)
+      test_recon_losses = tf.concat(tower_recon_losses, axis=0)
+      test_metrics = {'preds': test_preds,
+                     'labels': batch_labels,
+                     'recon_losses': test_recon_losses
+                     }
     if FLAGS.adv_patch:
-      test_metrics['patch'] = patch
+      test_metrics['patch'] = patch_node
     
     # Reset and read operations for streaming metrics go here
     test_reset = {}
@@ -226,14 +240,29 @@ def main(args):
       test_scales = []
 
       interval = 0.1 if FLAGS.adv_patch else 1
-      scale_min_feed = g_test.get_tensor_by_name("scale_min_feed")
-      scale_max_feed = g_test.get_tensor_by_name("scale_max_feed")
       for scale in np.arange(0, 1, interval):
         for i in range(num_batches_test):
           feed_dict = {scale_min_feed:scale, scale_max_feed:scale}
+          if FLAGS.save_patch:
+            out = sess_test.run(test_metrics['patch'], feed_dict=feed_dict)
+            patch = out
+            if patch.shape[-1] == 1:
+              patch = np.squeeze(patch, axis=-1)
+            plt.imsave(os.path.join(FLAGS.load_dir, "test", "saved_patch.png"),
+                       patch, vmin=0, vmax=1, format='png')
+            return
+          if FLAGS.patch_path:
+            patch_dims = patch_feed.get_shape()
+            mode = 'F' if len(patch_dims) == 2 or patch_dims[3] == 1 else 'RGB'
+            patch = np.asarray(Image.open(FLAGS.patch_path), dtype=np.float32)
+            if len(patch.shape) < 3:
+              patch = np.expand_dims(patch, axis=-1)
+            if patch_dims[-1] == 1:
+              patch = np.mean(patch, axis=-1)
+            patch = patch/255
+            feed_dict[patch_feed:patch]
           out = sess_test.run([test_metrics], feed_dict=feed_dict)
           test_metrics_v = out[0]
-
           ckpt_num = re.split('-', ckpt)[-1]
           logger.info('TEST ckpt-{}'.format(ckpt_num)
               + ' bch-{:d}'.format(i)
@@ -242,11 +271,6 @@ def main(args):
           test_labels_vals.append(test_metrics_v['labels'])
           test_recon_losses_vals.append(test_metrics_v['recon_losses'])
           test_scales.append(np.full(test_metrics_v['preds'].shape, fill_value=scale))
-
-    if FLAGS.adv_patch and FLAGS.save_patch:
-      patch = test_metrics_v['patch']
-      plt.imsave(os.path.join(FLAGS.load_dir, "test", "saved_patch.png"), patch,
-                 vmin=0, vmax=1, format='png')
 
     logger.info('writing to csv')
     test_preds_vals = np.concatenate(test_preds_vals)
@@ -269,6 +293,9 @@ def main(args):
       
 def tower_fn(build_arch, 
              x,
+             scale_min_feed,
+             scale_max_feed,
+             patch_feed,
              scope,
              num_classes, 
              is_train=False, 
@@ -276,8 +303,12 @@ def tower_fn(build_arch,
   with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables):
     patch = None
     if FLAGS.adv_patch:
-      x, patch = patch_inputs(x, is_train=is_train, reuse=reuse_variables)
+      x, patch = patch_inputs(x, is_train=is_train, reuse=reuse_variables, 
+                              scale_min=scale_min_feed, scale_max=scale_max_feed,
+                              patch_feed=patch_feed)
     output = build_arch(x, is_train, num_classes=num_classes)
+  if FLAGS.save_patch:
+    return None, None, patch
   decoder_out = output["decoder_out"]
   recon_loss = mod.reconstruction_loss(x, decoder_out, batch_reduce=False)
   return output['scores'], recon_loss, patch

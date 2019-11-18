@@ -91,6 +91,7 @@ flags.DEFINE_boolean('adv_patch', True, '''whether to sample reconstruction loss
                                         adversarial patch at different scales''')
 flags.DEFINE_boolean('save_patch', False, '''whether to save the patch''')
 flags.DEFINE_string('partition', "train", '''dataset partition to sample reconstruction losses from''')
+flags.DEFINE_string('patch_path', None, '''filepath of the patch to be loaded''')
 #------------------------------------------------------------------------------
 # ENVIRONMENT SETTINGS
 #------------------------------------------------------------------------------
@@ -206,7 +207,7 @@ def load_or_save_hyperparams(train_dir=None):
     logger.info("Loaded parameters from file: {}".format(params_path))
 
   # Save parameters to file
-  if FLAGS.mode == 'train': 
+  if FLAGS.mode == 'train' and train_dir is not None: 
     params_dir_path = os.path.join(train_dir, "params")
     os.makedirs(params_dir_path, exist_ok=True)
     params_file_path = os.path.join(params_dir_path, "params.json")

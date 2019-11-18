@@ -803,18 +803,20 @@ def _random_overlay(imgs, patch, scale_min, scale_max):
   return imgs * inverted_mask + padded_patch * image_mask
 
 
-def patch_inputs(x, is_train=True, reuse=None):
+def patch_inputs(x, is_train=True, reuse=None,
+                 scale_min=FLAGS.scale_min, scale_max=FLAGS.scale_max,
+                 patch_feed=None):
   with tf.variable_scope(tf.get_variable_scope(), reuse=reuse):
     # for this implementation, patch will have the same resolution as input
     patch_shape = x.get_shape().as_list()[1:]
-    patch_params = tf.get_variable("patch_params", patch_shape, trainable=is_train,
-                                   initializer=tf.random_uniform_initializer(minval=-2, maxval=2),
-                                   regularizer=None)
-    # box constraint the patch scalars into (0, 1) using change of variables approach
-    patch_node = tf.math.scalar_mul(0.5, tf.math.add(tf.math.tanh(patch_params), 1), name="default_patch")
-    patch_node = tf.placeholder_with_default(patch_node, shape=patch_shape, name="patch_feed")
-    scale_min = tf.placeholder_with_default(FLAGS.scale_min, shape=[], name="scale_min_feed")
-    scale_max = tf.placeholder_with_default(FLAGS.scale_max, shape=[], name="scale_max_feed")
+    if patch_feed is None:
+      patch_params = tf.get_variable("patch_params", patch_shape, trainable=is_train,
+                                      initializer=tf.random_uniform_initializer(minval=-2, maxval=2),
+                                      regularizer=None)
+      # box constraint the patch scalars into (0, 1) using change of variables approach
+      patch_node = tf.math.scalar_mul(0.5, tf.math.add(tf.math.tanh(patch_params), 1), name="default_patch")
+    else:
+      patch_node = patch_feed
     patched_x = _random_overlay(x, patch_node, scale_min, scale_max)
     patched_x = tf.clip_by_value(patched_x, clip_value_min=0, clip_value_max=1)
   return patched_x, patch_node
@@ -829,9 +831,6 @@ def tower_fn(build_arch,
              reuse_variables=None):
   """Model tower to be run on each GPU.
   
-  Author:
-    Ashley Gritzman 27/11/2018
-    
   Args: 
     build_arch:
     x: split of batch_x allocated to particular GPU

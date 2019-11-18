@@ -61,6 +61,7 @@ dependencies:
   - zlib=1.2.11=h7b6447c_3
   - matplotlib=3.1.1=py36h5429711_0
   - pandas=0.25.2=py36he6710b0_0
+  - pillow=6.2.1=py36h34e0f95_0
   - pip:
     - daiquiri==1.5.0
 prefix: /dccstor/astro/ashley/anaconda3/envs/capsenv
