@@ -248,8 +248,11 @@ def main(args):
             patch = out
             if patch.shape[-1] == 1:
               patch = np.squeeze(patch, axis=-1)
-            plt.imsave(os.path.join(FLAGS.load_dir, "test", "saved_patch.png"),
-                       patch, vmin=0, vmax=1, format='png')
+            formatted = (patch * 255).astype('uint8')
+            img = Image.fromarray(formatted)
+            img.save('adv_recon_mnist_pil.png')
+            #plt.imsave(os.path.join(FLAGS.load_dir, "test", "saved_patch.png"),
+            #           patch, vmin=0, vmax=1, format='png')
             return
           if FLAGS.patch_path:
             patch_dims = patch_feed.get_shape()
