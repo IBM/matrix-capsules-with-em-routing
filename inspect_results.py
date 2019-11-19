@@ -29,12 +29,11 @@ import models as mod
 
 
 from adv_patch_train_val import patch_inputs
-import matplotlib.pyplot as plt
 
 # for outputting sample to csv
 import pandas as pd
 
-# load png patch
+# load and save png patch
 from PIL import Image
 
 def main(args):
@@ -250,9 +249,7 @@ def main(args):
               patch = np.squeeze(patch, axis=-1)
             formatted = (patch * 255).astype('uint8')
             img = Image.fromarray(formatted)
-            img.save('adv_recon_mnist_pil.png')
-            #plt.imsave(os.path.join(FLAGS.load_dir, "test", "saved_patch.png"),
-            #           patch, vmin=0, vmax=1, format='png')
+            img.save(os.path.join(FLAGS.load_dir, "test", "saved_patch.png"))
             return
           if FLAGS.patch_path:
             patch_dims = patch_feed.get_shape()
