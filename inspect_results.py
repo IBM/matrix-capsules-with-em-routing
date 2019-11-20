@@ -35,6 +35,7 @@ import pandas as pd
 
 # load and save png patch
 from PIL import Image
+import re
 
 def main(args):
   
@@ -230,6 +231,16 @@ def main(args):
     # Run testing on checkpoints
     for ckpt in ckpts_to_test:
       saver.restore(sess_test, ckpt)
+
+      if FLAGS.save_patch:
+        out = sess_test.run(test_metrics['patch'], feed_dict=feed_dict)
+        patch = out
+        if patch.shape[-1] == 1:
+          patch = np.squeeze(patch, axis=-1)
+        formatted = (patch * 255).astype('uint8')
+        img = Image.fromarray(formatted)
+        img.save(os.path.join(FLAGS.load_dir, "test", "saved_patch.png"))
+        return
           
       # Reset accumulators
       sess_test.run(test_reset)
@@ -242,31 +253,21 @@ def main(args):
       for scale in np.arange(0, 1, interval):
         for i in range(num_batches_test):
           feed_dict = {scale_min_feed:scale, scale_max_feed:scale}
-          if FLAGS.save_patch:
-            out = sess_test.run(test_metrics['patch'], feed_dict=feed_dict)
-            patch = out
-            if patch.shape[-1] == 1:
-              patch = np.squeeze(patch, axis=-1)
-            formatted = (patch * 255).astype('uint8')
-            img = Image.fromarray(formatted)
-            img.save(os.path.join(FLAGS.load_dir, "test", "saved_patch.png"))
-            return
           if FLAGS.patch_path:
             patch_dims = patch_feed.get_shape()
-            mode = 'F' if len(patch_dims) == 2 or patch_dims[3] == 1 else 'RGB'
             patch = np.asarray(Image.open(FLAGS.patch_path), dtype=np.float32)
             if len(patch.shape) < 3:
               patch = np.expand_dims(patch, axis=-1)
-            if patch_dims[-1] == 1:
-              patch = np.mean(patch, axis=-1)
-            patch = patch/255
-            feed_dict[patch_feed:patch]
+          if patch_dims[-1] == 1:
+            patch = np.mean(patch, axis=-1, keepdims=True)
+          patch = patch/255
+          feed_dict[patch_feed] = patch
           out = sess_test.run([test_metrics], feed_dict=feed_dict)
           test_metrics_v = out[0]
-          ckpt_num = re.split('-', ckpt)[-1]
-          logger.info('TEST ckpt-{}'.format(ckpt_num)
-              + ' bch-{:d}'.format(i)
-              )
+          #ckpt_num = re.split('-', ckpt)[-1]
+          #logger.info('TEST ckpt-{}'.format(ckpt_num)
+          #    + ' bch-{:d}'.format(i)
+          #    )
           test_preds_vals.append(test_metrics_v['preds'])
           test_labels_vals.append(test_metrics_v['labels'])
           test_recon_losses_vals.append(test_metrics_v['recon_losses'])
@@ -278,17 +279,17 @@ def main(args):
     test_recon_losses_vals = np.concatenate(test_recon_losses_vals)
     test_scales = np.concatenate(test_scales)
 
-    print(test_preds_vals.shape)
-    print(test_labels_vals.shape)
-    print(test_recon_losses_vals.shape)
     data = {'predictions': test_preds_vals,
             'labels': test_labels_vals,
             'reconstruction_losses': test_recon_losses_vals,
             'scales': test_scales
            }
-    csv_save_path = os.path.join(FLAGS.load_dir, FLAGS.partition, "recon_losses.csv")
+    filename = "recon_losses.csv"
+    if FLAGS.patch_path:
+      filename = re.sub('[^\w\-_]', '_', FLAGS.patch_path) + "_" + FLAGS.partition + ".csv"
+    csv_save_path = os.path.join(FLAGS.load_dir, FLAGS.partition, filename)
     pd.DataFrame(data).to_csv(csv_save_path, index=False)
-    logger.info('csv saved')
+    logger.info('csv saved at ' + csv_save_path)
 
       
 def tower_fn(build_arch, 

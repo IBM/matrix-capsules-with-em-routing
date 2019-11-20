@@ -715,7 +715,8 @@ def _transform_vector(width, x_shift, y_shift, im_scale, rot_in_degrees):
 
   # Scale it
   # (use inverse scale because tf.contrib.image.transform will do the inverse)
-  inv_scale = 1. / im_scale
+  epsilon = 1e-8
+  inv_scale = 1. / (im_scale + epsilon)
   xform_matrix = rot_matrix * inv_scale
   a0, a1 = xform_matrix[0]
   b0, b1 = xform_matrix[1]
@@ -737,8 +738,8 @@ def _transform_vector(width, x_shift, y_shift, im_scale, rot_in_degrees):
   y_origin_delta = y_origin - y_origin_shifted
 
   # Combine our desired shifts with the rotation-induced undesirable shift
-  a2 = x_origin_delta - (x_shift / (2 * im_scale))
-  b2 = y_origin_delta - (y_shift / (2 * im_scale))
+  a2 = x_origin_delta - (x_shift / (2 * im_scale + epsilon))
+  b2 = y_origin_delta - (y_shift / (2 * im_scale + epsilon))
 
   # Return these values in the order that tf.contrib.image.transform expects
   return np.array([a0, a1, a2, b0, b1, b2, 0, 0]).astype(np.float32)

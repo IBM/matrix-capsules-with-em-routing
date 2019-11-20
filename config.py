@@ -79,8 +79,9 @@ flags.DEFINE_boolean('new_patch', False, '''whether to start training a new patc
                                          which excludes restoring of certain variables''')
 flags.DEFINE_float('max_rotation', 22.5, '''max degree of rotation in random
                                          patch transformations''')
-flags.DEFINE_float('scale_min', 0.1, '''patch scaling minimum''')
-flags.DEFINE_float('scale_max', 1.2, '''patch scaling maximum''')
+# train scale values from https://github.com/tensorflow/cleverhans/blob/master/examples/adversarial_patch/AdversarialPatch.ipynb
+flags.DEFINE_float('scale_min', 0.3, '''patch scaling minimum''')
+flags.DEFINE_float('scale_max', 1.5, '''patch scaling maximum''')
 flags.DEFINE_integer('target_class', 0, '''the targeted class for adversarial patch''')
 flags.DEFINE_boolean('carliniwagner', True, '''whether to use carlini's adversarial loss''')
 flags.DEFINE_float('adv_conf_thres', 20, '''logit confidence of the adversarial example,
