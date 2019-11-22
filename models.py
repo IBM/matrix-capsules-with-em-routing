@@ -220,7 +220,7 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int, y=None):
 #------------------------------------------------------------------------------
 # CAPSNET FOR DEEPER
 #------------------------------------------------------------------------------
-def build_arch_deepcap(inp, is_train: bool, num_classes: int, y=None, set_bg_to_zero: bool=False):
+def build_arch_deepcap(inp, is_train: bool, num_classes: int, y=None):
   logger.info('input shape: {}'.format(inp.get_shape()))
   batch_size = int(inp.get_shape()[0])
   spatial_size = int(inp.get_shape()[1])
@@ -402,32 +402,33 @@ def build_arch_deepcap(inp, is_train: bool, num_classes: int, y=None, set_bg_to_
         dropout = False,
         dropconnect = FLAGS.dropconnect if is_train else False,
         affine_voting = FLAGS.affine_voting)
-
     if FLAGS.recon_loss:
-      class_predictions = tf.argmax(class_activation_out, axis=-1,
-                                    name="class_predictions")
+      if y is None:
+        selected_classes = tf.argmax(class_activation_out, axis=-1,
+                                     name="class_predictions")
+      else:
+        selected_classes = y
       # [batch, num_classes]
-      recon_mask = tf.one_hot(class_predictions, depth=num_classes,
+      recon_mask = tf.one_hot(selected_classes, depth=num_classes,
                               on_value=True, off_value=False, dtype=tf.bool,
                               name="reconstruction_mask")
       # dim(poses) = [batch, num_classes, matrix_size]
       class_input = tf.boolean_mask(class_pose_out, recon_mask, name="masked_pose")
       if FLAGS.num_bg_classes > 0:
-        if set_bg_to_zero:
-          weighted_bg = tf.zeros([batch_size, FLAGS.num_bg_classes, 16])
-        else:
-          bg_activation, bg_pose = lyr.fc_caps(
-            activation_in=activation,
-            pose_in=pose,
-            ncaps_out=FLAGS.num_bg_classes,
-            name='bg_caps',
-            weights_regularizer=capsule_weights_regularizer,
-            drop_rate=FLAGS.drop_rate,
-            dropout=False,
-            dropconnect=FLAGS.dropconnect if is_train else False,
-            affine_voting=FLAGS.affine_voting)
-          weighted_bg = tf.multiply(bg_pose, tf.expand_dims(bg_activation, -1))
-        decoder_input = tf.concat([weighted_bg, class_input], 1)
+        bg_activation, bg_pose = lyr.fc_caps(
+          activation_in=activation,
+          pose_in=pose,
+          ncaps_out=FLAGS.num_bg_classes,
+          name='bg_caps',
+          weights_regularizer=capsule_weights_regularizer,
+          drop_rate=FLAGS.drop_rate,
+          dropout=False,
+          dropconnect=FLAGS.dropconnect if is_train else False,
+          affine_voting=FLAGS.affine_voting)
+        weighted_bg = tf.multiply(bg_pose, tf.expand_dims(bg_activation, -1))
+        bg_size = int(np.prod(weighted_bg.get_shape()[1:]))
+        flattened_bg = tf.reshape(weighted_bg, [batch_size, bg_size])
+        decoder_input = tf.concat([flattened_bg, class_input], 1)
       else:
         decoder_input = class_input
       output_size = int(np.prod(inp.get_shape()[1:]))
@@ -440,8 +441,22 @@ def build_arch_deepcap(inp, is_train: bool, num_classes: int, y=None, set_bg_to_
       decoder_output = slim.fully_connected(recon_2, output_size,
                                             activation_fn=tf.nn.sigmoid,
                                             scope="decoder_output")
-      return {'scores': class_activation_out, 'pose_out': class_pose_out,
-              'decoder_out': decoder_output, 'input': inp}
+      out_dict = {'scores': class_activation_out, 'pose_out': class_pose_out,
+                  'decoder_out': decoder_output, 'input': inp}
+      if FLAGS.zeroed_bg_reconstruction:
+        scope.reuse_variables()
+        zeroed_bg_decoder_input = tf.concat([tf.zeros(weighted_bg.get_shape()), class_input], 1)
+        recon_1 = slim.fully_connected(zeroed_bg_decoder_input, FLAGS.X,
+                                       activation_fn=tf.nn.tanh,
+                                       scope="recon_1")
+        recon_2 = slim.fully_connected(recon_1, FLAGS.Y,
+                                       activation_fn=tf.nn.tanh,
+                                       scope="recon_2")
+        zeroed_bg_decoder_output = slim.fully_connected(recon_2, output_size,
+                                              activation_fn=tf.nn.sigmoid,
+                                              scope="decoder_output")
+        out_dict['zeroed_bg_decoder_out'] = zeroed_bg_decoder_output
+      return out_dict 
   return {'scores': class_activation_out, 'pose_out': class_pose_out}
 
 
@@ -639,28 +654,61 @@ def build_arch_rescap(inp, is_train: bool, num_classes: int, y=None):
         dropout = False,
         dropconnect = FLAGS.dropconnect if is_train else False,
         affine_voting = FLAGS.affine_voting)
-
     if FLAGS.recon_loss:
-      class_predictions = tf.argmax(activation_out, axis=-1,
-                                    name="class_predictions")
+      if y is None:
+        selected_classes = tf.argmax(class_activation_out, axis=-1,
+                                     name="class_predictions")
+      else:
+        selected_classes = y
       # [batch, num_classes]
-      recon_mask = tf.one_hot(class_predictions, depth=num_classes,
+      recon_mask = tf.one_hot(selected_classes, depth=num_classes,
                               on_value=True, off_value=False, dtype=tf.bool,
                               name="reconstruction_mask")
       # dim(poses) = [batch, num_classes, matrix_size]
-      decoder_input = tf.boolean_mask(pose_out, recon_mask, name="masked_pose")
+      class_input = tf.boolean_mask(class_pose_out, recon_mask, name="masked_pose")
+      if FLAGS.num_bg_classes > 0:
+        bg_activation, bg_pose = lyr.fc_caps(
+          activation_in=activation,
+          pose_in=pose,
+          ncaps_out=FLAGS.num_bg_classes,
+          name='bg_caps',
+          weights_regularizer=capsule_weights_regularizer,
+          drop_rate=FLAGS.drop_rate,
+          dropout=False,
+          dropconnect=FLAGS.dropconnect if is_train else False,
+          affine_voting=FLAGS.affine_voting)
+        weighted_bg = tf.multiply(bg_pose, tf.expand_dims(bg_activation, -1))
+        bg_size = int(np.prod(weighted_bg.get_shape()[1:]))
+        flattened_bg = tf.reshape(weighted_bg, [batch_size, bg_size])
+        decoder_input = tf.concat([flattened_bg, class_input], 1)
+      else:
+        decoder_input = class_input
       output_size = int(np.prod(inp.get_shape()[1:]))
       recon_1 = slim.fully_connected(decoder_input, FLAGS.X,
                                      activation_fn=tf.nn.tanh,
                                      scope="recon_1")
       recon_2 = slim.fully_connected(recon_1, FLAGS.Y,
                                      activation_fn=tf.nn.tanh,
-                                     scope="recon_2") 
+                                     scope="recon_2")
       decoder_output = slim.fully_connected(recon_2, output_size,
                                             activation_fn=tf.nn.sigmoid,
-                                            scope="decoder_output")   
-      return {'scores': activation_out, 'pose_out': pose_out,
-              'decoder_out': decoder_output, 'input': inp}
+                                            scope="decoder_output")
+      out_dict = {'scores': class_activation_out, 'pose_out': class_pose_out,
+                  'decoder_out': decoder_output, 'input': inp}
+      if FLAGS.zeroed_bg_reconstruction:
+        scope.reuse_variables()
+        zeroed_bg_decoder_input = tf.concat([tf.zeros(weighted_bg.get_shape()), class_input], 1)
+        recon_1 = slim.fully_connected(zeroed_bg_decoder_input, FLAGS.X,
+                                       activation_fn=tf.nn.tanh,
+                                       scope="recon_1")
+        recon_2 = slim.fully_connected(recon_1, FLAGS.Y,
+                                       activation_fn=tf.nn.tanh,
+                                       scope="recon_2")
+        zeroed_bg_decoder_output = slim.fully_connected(recon_2, output_size,
+                                              activation_fn=tf.nn.sigmoid,
+                                              scope="decoder_output")
+        out_dict['zeroed_bg_decoder_out'] = zeroed_bg_decoder_output
+      return out_dict 
   return {'scores': activation_out, 'pose_out': pose_out}
 
 
