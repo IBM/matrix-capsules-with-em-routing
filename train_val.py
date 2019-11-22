@@ -690,7 +690,10 @@ def tower_fn(build_arch,
   """
   
   with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables):
-    output = build_arch(x, is_train, num_classes=num_classes, y=y)
+    if is_train:
+      output = build_arch(x, is_train, num_classes=num_classes, y=y)
+    else:
+      output = build_arch(x, is_train, num_classes=num_classes)
   loss = mod.total_loss(output, y)
   return loss, output['scores']
 
