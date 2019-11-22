@@ -44,6 +44,9 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int, y=None):
   nn_weights_regularizer = tf.contrib.layers.l2_regularizer(FLAGS.nn_weight_reg_lambda)
   capsule_weights_regularizer = tf.contrib.layers.l2_regularizer(FLAGS.capsule_weight_reg_lambda)
 
+  # for drop connect during em routing
+  drop_rate = FLAGS.drop_rate if is_train else 0
+
   # weights_initializer=initializer,
   with slim.arg_scope([slim.conv2d, slim.fully_connected], 
     trainable = is_train, 
