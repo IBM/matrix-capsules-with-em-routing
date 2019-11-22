@@ -23,7 +23,7 @@ logger = daiquiri.getLogger(__name__)
 #------------------------------------------------------------------------------
 # CAPSNET FOR SMALLNORB
 #------------------------------------------------------------------------------
-def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
+def build_arch_smallnorb(inp, is_train: bool, num_classes: int, y=None):
   
   logger.info('input shape: {}'.format(inp.get_shape()))
   batch_size = int(inp.get_shape()[0])
@@ -160,10 +160,13 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
         affine_voting = FLAGS.affine_voting)
 
     if FLAGS.recon_loss:
-      class_predictions = tf.argmax(class_activation_out, axis=-1,
-                                    name="class_predictions")
+      if y is None:
+        selected_classes = tf.argmax(class_activation_out, axis=-1,
+                                     name="class_predictions")
+      else:
+        selected_classes = y
       # [batch, num_classes]
-      recon_mask = tf.one_hot(class_predictions, depth=num_classes,
+      recon_mask = tf.one_hot(selected_classes, depth=num_classes,
                               on_value=True, off_value=False, dtype=tf.bool,
                               name="reconstruction_mask")
       # dim(poses) = [batch, num_classes, matrix_size]
@@ -217,7 +220,7 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int):
 #------------------------------------------------------------------------------
 # CAPSNET FOR DEEPER
 #------------------------------------------------------------------------------
-def build_arch_deepcap(inp, is_train: bool, num_classes: int, set_bg_to_zero: bool=False):
+def build_arch_deepcap(inp, is_train: bool, num_classes: int, y=None, set_bg_to_zero: bool=False):
   logger.info('input shape: {}'.format(inp.get_shape()))
   batch_size = int(inp.get_shape()[0])
   spatial_size = int(inp.get_shape()[1])
@@ -445,7 +448,7 @@ def build_arch_deepcap(inp, is_train: bool, num_classes: int, set_bg_to_zero: bo
 #------------------------------------------------------------------------------
 # CAPSNET FOR RESCAP
 #------------------------------------------------------------------------------
-def build_arch_rescap(inp, is_train: bool, num_classes: int):
+def build_arch_rescap(inp, is_train: bool, num_classes: int, y=None):
   logger.info('input shape: {}'.format(inp.get_shape()))
   batch_size = int(inp.get_shape()[0])
   spatial_size = int(inp.get_shape()[1])
@@ -664,7 +667,7 @@ def build_arch_rescap(inp, is_train: bool, num_classes: int):
 #------------------------------------------------------------------------------
 # BASELINE CNN FOR SMALLNORB
 #------------------------------------------------------------------------------
-def build_arch_baseline(input, is_train: bool, num_classes: int):
+def build_arch_baseline(input, is_train: bool, num_classes: int, y=None):
   """Spread loss.
   
   "As the baseline for our experiments on generalization to novel viewpoints 
