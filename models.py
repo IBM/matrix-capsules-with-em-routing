@@ -658,7 +658,7 @@ def build_arch_rescap(inp, is_train: bool, num_classes: int, y=None):
         dropconnect = FLAGS.dropconnect if is_train else False,
         affine_voting = FLAGS.affine_voting)
     if FLAGS.recon_loss:
-      if y is None:
+      if y is None or alter_recon_lambda is not None:
         selected_classes = tf.argmax(class_activation_out, axis=-1,
                                      name="class_predictions")
       else:
