@@ -11,7 +11,7 @@ def _floatify_and_normalize(datapoint):
 def create_inputs(is_train, force_train_set=False):
   # currently does not support actual validation pipeline
   split = "train" if is_train or force_train_set else "test"
-  data = tfds.load(name="mnist", split=split)
+  data = tfds.load(name="svhn_cropped", split=split)
   data = data.map(_floatify_and_normalize, num_parallel_calls=FLAGS.num_threads)
   if is_train:
     data = data.shuffle(2000 + 3 * FLAGS.batch_size).batch(FLAGS.batch_size, drop_remainder=True).repeat()

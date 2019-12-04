@@ -163,17 +163,21 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int, y=None):
         affine_voting = FLAGS.affine_voting)
 
     if FLAGS.recon_loss:
-      if y is None:
-        selected_classes = tf.argmax(class_activation_out, axis=-1,
-                                     name="class_predictions")
+      if FLAGS.multi_weighted_pred_recon:
+        class_input = tf.multiply(class_pose_out, tf.expand_dims(class_activation_out, -1))
+        dim = int(np.prod(class_input.get_shape()[1:]))
+        class_input = tf.reshape(class_input, [batch_size, dim])
       else:
-        selected_classes = y
-      # [batch, num_classes]
-      recon_mask = tf.one_hot(selected_classes, depth=num_classes,
-                              on_value=True, off_value=False, dtype=tf.bool,
-                              name="reconstruction_mask")
-      # dim(poses) = [batch, num_classes, matrix_size]
-      class_input = tf.boolean_mask(class_pose_out, recon_mask, name="masked_pose")
+        if y is None:
+          selected_classes = tf.argmax(class_activation_out, axis=-1,
+                                       name="class_predictions")
+        else:
+          selected_classes = y
+        recon_mask = tf.one_hot(selected_classes, depth=num_classes,
+                                on_value=True, off_value=False, dtype=tf.bool,
+                                name="reconstruction_mask")
+        # dim(class_input) = [batch, matrix_size]
+        class_input = tf.boolean_mask(class_pose_out, recon_mask, name="masked_pose")
       if FLAGS.num_bg_classes > 0:
         bg_activation, bg_pose = lyr.fc_caps(
           activation_in=activation,
@@ -647,7 +651,7 @@ def build_arch_rescap(inp, is_train: bool, num_classes: int, y=None):
     # pose_in: (64, 5, 5, 32, 16)
     # activation_out: (64, 5)
     # pose_out: (64, 5, 16) 
-    activation_out, pose_out = lyr.fc_caps(
+    class_activation_out, class_pose_out = lyr.fc_caps(
         activation_in = activation,
         pose_in = pose,
         ncaps_out = num_classes,
@@ -658,7 +662,7 @@ def build_arch_rescap(inp, is_train: bool, num_classes: int, y=None):
         dropconnect = FLAGS.dropconnect if is_train else False,
         affine_voting = FLAGS.affine_voting)
     if FLAGS.recon_loss:
-      if y is None or alter_recon_lambda is not None:
+      if y is None:
         selected_classes = tf.argmax(class_activation_out, axis=-1,
                                      name="class_predictions")
       else:
@@ -712,7 +716,7 @@ def build_arch_rescap(inp, is_train: bool, num_classes: int, y=None):
                                               scope="decoder_output")
         out_dict['zeroed_bg_decoder_out'] = zeroed_bg_decoder_output
       return out_dict 
-  return {'scores': activation_out, 'pose_out': pose_out}
+  return {'scores': class_activation_out, 'pose_out': class_pose_out}
 
 
 #------------------------------------------------------------------------------
