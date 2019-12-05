@@ -230,7 +230,8 @@ def get_dataset_path(dataset_name: str):
   # those are actually saved under ~/tensorflow_datasets/
   options = {'smallNORB': 'data/smallNORB/tfrecord',
              'mnist': '',
-             'cifar10': ''}
+             'cifar10': '',
+             'svhn': ''}
   path = FLAGS.storage + options[dataset_name]
   return path
 
@@ -240,7 +241,8 @@ def get_dataset_size_train(dataset_name: str):
              'smallNORB': 23400 * 2,
              'fashion_mnist': 55000, 
              'cifar10': 50000, 
-             'cifar100': 50000}
+             'cifar100': 50000,
+             'svhn': 73257}
   return options[dataset_name]
 
 
@@ -249,7 +251,8 @@ def get_dataset_size_test(dataset_name: str):
              'smallNORB': 23400 * 2,
              'fashion_mnist': 10000, 
              'cifar10': 10000, 
-             'cifar100': 10000}
+             'cifar100': 10000,
+             'svhn': 26032}
   return options[dataset_name]
 
 
@@ -258,7 +261,8 @@ def get_dataset_size_validate(dataset_name: str):
     print("%s pipeline is not set up for validation, using test set for validation instead")
   options = {'smallNORB': get_dataset_size_test(dataset_name),
              'mnist': get_dataset_size_test(dataset_name),
-             'cifar10': get_dataset_size_test(dataset_name)}
+             'cifar10': get_dataset_size_test(dataset_name),
+             'svhn': get_dataset_size_test(dataset_name)}
   return options[dataset_name]
 
 
@@ -267,13 +271,15 @@ def get_num_classes(dataset_name: str):
              'smallNORB': 5, 
              'fashion_mnist': 10, 
              'cifar10': 10, 
-             'cifar100': 100}
+             'cifar100': 100,
+             'svhn': 10}
   return options[dataset_name]
 
 
 from data_pipelines import norb as data_norb
 from data_pipelines import mnist as data_mnist
 from data_pipelines import cifar10 as data_cifar10
+from data_pipelines import svhn as data_svhn
 def get_create_inputs(dataset_name: str, mode="train"):
   
   force_train_set = False
@@ -292,7 +298,9 @@ def get_create_inputs(dataset_name: str, mode="train"):
              'mnist':
                  lambda: data_mnist.create_inputs(is_train, force_train_set),
              'cifar10':
-                 lambda: data_cifar10.create_inputs(is_train, force_train_set)}
+                 lambda: data_cifar10.create_inputs(is_train, force_train_set),
+             'svhn':
+                 lambda: data_svhn.create_inputs(is_train, force_train_set)}
   return options[dataset_name]
 
 
