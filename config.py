@@ -58,8 +58,8 @@ flags.DEFINE_integer('B', 8, 'number of capsules in output from PrimaryCaps')
 flags.DEFINE_integer('C', 16, 'number of channels in output from ConvCaps1')
 flags.DEFINE_integer('D', 16, 'number of channels in output from ConvCaps2')
 flags.DEFINE_boolean('deeper', False, '''whether or not to go deeper''')
-flags.DEFINE_boolean('rescap', False, '''whether or not to go deeper with residual
-                      capsule routing''')
+flags.DEFINE_boolean('residual', False, '''whether or not to add residual
+                      capsule routes to the final class layer''') # not supported yet
 flags.DEFINE_integer('E', 8, 'number of channels in output from ConvCaps3')
 flags.DEFINE_integer('F', 16, 'number of channels in output from ConvCaps4')
 flags.DEFINE_integer('G', 16, 'number of channels in output from ConvCaps5')
