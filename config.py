@@ -321,7 +321,7 @@ def get_dataset_architecture(dataset_name: str):
   #            'mnist': mod.build_arch_smallnorb,
   #            'cifar10': mod.build_arch_smallnorb}
   # return options[dataset_name]
-  if FLAGS.deeper == True:
+  if FLAGS.deeper:
     return mod.build_arch_deepcap
   return mod.build_arch_smallnorb 
 
