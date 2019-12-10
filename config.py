@@ -51,8 +51,9 @@ flags.DEFINE_boolean('dropout_extra', False, '''whether to apply extra dropout''
 # ARCHITECTURE PARAMETERS
 #------------------------------------------------------------------------------
 flags.DEFINE_string('dataset', 'smallNORB',
-                    '''dataset name: currently only "smallNORB, mnist, and
-                     cifar10" supported, feel free to add your own''')
+                    '''dataset name: currently only "smallNORB, mnist,
+                     cifar10, svhn, and imagenet64" supported,
+                     feel free to add your own''')
 flags.DEFINE_integer('A', 64, 'number of channels in output from ReLU Conv1')
 flags.DEFINE_integer('B', 8, 'number of capsules in output from PrimaryCaps')
 flags.DEFINE_integer('C', 16, 'number of channels in output from ConvCaps1')
@@ -251,24 +252,21 @@ def get_dataset_size_train(dataset_name: str):
 def get_dataset_size_test(dataset_name: str):
   if dataset_name is 'imagenet64':
     logger.info("%s pipeline is not set up for testing, using validation set for testing instead"%dataset_name)
+    return get_dataset_size_validate(dataset_name)
   options = {'mnist': 10000, 
              'smallNORB': 23400 * 2,
              'fashion_mnist': 10000, 
              'cifar10': 10000, 
              'cifar100': 10000,
-             'svhn': 26032,
-             'imagenet64': get_dataset_size_validate(dataset_name)}
+             'svhn': 26032}
   return options[dataset_name]
 
 
 def get_dataset_size_validate(dataset_name: str):
   if dataset_name is 'smallNORB' or dataset_name is 'mnist' or dataset_name is 'cifar10':
     logger.info("%s pipeline is not set up for validation, using test set for validation instead"%dataset_name)
-  options = {'smallNORB': get_dataset_size_test(dataset_name),
-             'mnist': get_dataset_size_test(dataset_name),
-             'cifar10': get_dataset_size_test(dataset_name),
-             'svhn': get_dataset_size_test(dataset_name),
-             'imagenet64': 50000}
+    return get_dataset_size_test(dataset_name)
+  options = {'imagenet64': 50000}
   return options[dataset_name]
 
 
