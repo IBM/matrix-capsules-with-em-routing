@@ -8,9 +8,11 @@ def _floatify_and_normalize(datapoint):
   return img, datapoint["label"]
 
 
-def create_inputs(is_train, force_train_set=False):
+def create_inputs(is_train, force_set=None):
   # currently does not support actual validation pipeline
-  split = "train" if is_train or force_train_set else "test"
+  split = "train" if is_train else "test"
+  if force_set is not None:
+    split = force_set
   data = tfds.load(name="cifar10", split=split)
   data = data.map(_floatify_and_normalize, num_parallel_calls=FLAGS.num_threads)
   if is_train:

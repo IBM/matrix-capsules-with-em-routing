@@ -63,11 +63,13 @@ def main(args):
   
   # Get dataset hyperparameters
   logger.info('Using dataset: {}'.format(FLAGS.dataset))
-  dataset_size_train  = conf.get_dataset_size_train(FLAGS.dataset)
-  dataset_size_val  = conf.get_dataset_size_validate(FLAGS.dataset)
-  build_arch      = conf.get_dataset_architecture(FLAGS.dataset)
-  num_classes     = conf.get_num_classes(FLAGS.dataset)
-  create_inputs_train = conf.get_create_inputs(FLAGS.dataset, mode="train")
+  dataset_size_train = conf.get_dataset_size_train(FLAGS.dataset)\
+      if not FLAGS.train_on_test else conf.get_dataset_size_test(FLAGS.dataset)
+  dataset_size_val = conf.get_dataset_size_validate(FLAGS.dataset)
+  build_arch = conf.get_dataset_architecture(FLAGS.dataset)
+  num_classes = conf.get_num_classes(FLAGS.dataset)
+  create_inputs_train = conf.get_create_inputs(FLAGS.dataset, mode="train")\
+      if not FLAGS.train_on_test else conf.get_create_inputs(FLAGS.dataset, mode="train_on_test")
   create_inputs_train_wholeset = conf.get_create_inputs(FLAGS.dataset, mode="train_whole")
   if dataset_size_val > 0:
     create_inputs_val   = conf.get_create_inputs(FLAGS.dataset, mode="validate")

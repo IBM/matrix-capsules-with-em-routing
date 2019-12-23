@@ -8,9 +8,11 @@ def _floatify_and_normalize(datapoint):
   return img, datapoint["label"]
 
 
-def create_inputs(is_train, force_train_set=False):
-  # currently does not support actual validation pipeline
-  split = "train" if is_train or force_train_set else "validation"
+def create_inputs(is_train, force_set=None):
+  # does not have test
+  split = "train" if is_train else "validation"
+  if force_set is not None:
+    split = force_set
   data = tfds.image.imagenet_resized.ImagenetResized(split=split)
   data.builder_config.size = 64
   data = data.map(_floatify_and_normalize, num_parallel_calls=FLAGS.num_threads)

@@ -79,6 +79,8 @@ flags.DEFINE_boolean('zeroed_bg_reconstruction', False, '''whether to return
 # ADVERSARIAL PATCH PARAMETERS
 #------------------------------------------------------------------------------
 # also modify recon_loss and recon_loss_lambda to adjust patch optimization parameters
+flags.DEFINE_string('train_on_test', True, '''whether to train patch on the test dataset
+                                           for stronger performance''')
 flags.DEFINE_boolean('new_patch', False, '''whether to start training a new patch from ckpt,
                                          which excludes restoring of certain variables''')
 flags.DEFINE_float('max_rotation', 22.5, '''max degree of rotation in random
@@ -288,27 +290,29 @@ from data_pipelines import svhn as data_svhn
 from data_pipelines import imagenet64 as data_imagenet64
 def get_create_inputs(dataset_name: str, mode="train"):
   
-  force_train_set = False
+  force_set = None
   if mode == "train":
     is_train = True
   else:
     # for dataset pipelines that don't have validation set up
     is_train = False
-    if mode == "train_whole":
-      force_train_set = True
+  if mode == "train_whole":
+    force_set = "train"
+  elif mode == "train_on_test":
+    force_set = "test"
    
   path = get_dataset_path(dataset_name)
   
   options = {'smallNORB':
-                 lambda: data_norb.create_inputs_norb(path, is_train, force_train_set),
+                 lambda: data_norb.create_inputs_norb(path, is_train, force_set),
              'mnist':
-                 lambda: data_mnist.create_inputs(is_train, force_train_set),
+                 lambda: data_mnist.create_inputs(is_train, force_set),
              'cifar10':
-                 lambda: data_cifar10.create_inputs(is_train, force_train_set),
+                 lambda: data_cifar10.create_inputs(is_train, force_set),
              'svhn':
-                 lambda: data_svhn.create_inputs(is_train, force_train_set),
+                 lambda: data_svhn.create_inputs(is_train, force_set),
              'imagenet64':
-                 lambda: data_imagenet64.create_inputs(is_train, force_train_set)}
+                 lambda: data_imagenet64.create_inputs(is_train, force_set)}
   return options[dataset_name]
 
 
