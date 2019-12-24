@@ -492,8 +492,9 @@ def main(args):
   SAVE_MODEL_FREQ = num_batches_per_epoch # 500
   VAL_FREQ = num_batches_per_epoch # 500
   PROFILE_FREQ = 5
-  
+  #print("starting main loop") 
   for step in range(prev_step, FLAGS.epoch * num_batches_per_epoch + 1): 
+    #print("looping")
   #for step in range(0,3):
     # AG 23/05/2018: limit number of iterations for testing
     # for step in range(100):
@@ -541,6 +542,7 @@ def main(args):
           #logger.info('TRN'
           #      + ' e-{:d}'.format(epoch)
           #      + ' stp-{:d}'.format(step) 
+          #        )
           #      + ' {:.2f}s'.format(toc - tic) 
           #      + ' loss: {:.4f}'.format(trn_metrics_v['loss'])
           #      + ' acc: {:.2f}%'.format(trn_metrics_v['acc']*100)
@@ -955,14 +957,15 @@ def load_training(saver, session, load_dir, optimizer=None):
     ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
     if ckpt and ckpt.model_checkpoint_path:
       restored_variables = tf.get_collection_ref(tf.GraphKeys.GLOBAL_VARIABLES)
+      prev_step = extract_step(ckpt.model_checkpoint_path)
       if FLAGS.new_patch:
         restored_variables = [v for v in restored_variables if "patch_params" not in v.name]
         for optim_var in optimizer.variables():
           excluded = optim_var.name
           restored_variables = [v for v in restored_variables if excluded not in v.name]
         saver = tf.train.Saver(restored_variables, max_to_keep=None)
+        prev_step = 0
       saver.restore(session, ckpt.model_checkpoint_path)
-      prev_step = extract_step(ckpt.model_checkpoint_path)
       logger.info("Restored checkpoint")
     else:
       raise IOError("""AG: load_ckpt directory exists but cannot find a valid 

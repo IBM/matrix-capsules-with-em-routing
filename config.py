@@ -59,7 +59,7 @@ flags.DEFINE_integer('B', 8, 'number of capsules in output from PrimaryCaps')
 flags.DEFINE_integer('C', 16, 'number of channels in output from ConvCaps1')
 flags.DEFINE_integer('D', 16, 'number of channels in output from ConvCaps2')
 flags.DEFINE_boolean('deeper', False, '''whether or not to go deeper''')
-flags.DEFINE_boolean('residual', False, '''whether or not to add residual
+flags.DEFINE_boolean('rescap', False, '''whether or not to add residual
                       capsule routes to the final class layer''') # not supported yet
 flags.DEFINE_integer('E', 8, 'number of channels in output from ConvCaps3')
 flags.DEFINE_integer('F', 16, 'number of channels in output from ConvCaps4')
@@ -79,7 +79,7 @@ flags.DEFINE_boolean('zeroed_bg_reconstruction', False, '''whether to return
 # ADVERSARIAL PATCH PARAMETERS
 #------------------------------------------------------------------------------
 # also modify recon_loss and recon_loss_lambda to adjust patch optimization parameters
-flags.DEFINE_string('train_on_test', True, '''whether to train patch on the test dataset
+flags.DEFINE_boolean('train_on_test', True, '''whether to train patch on the test dataset
                                            for stronger performance''')
 flags.DEFINE_boolean('new_patch', False, '''whether to start training a new patch from ckpt,
                                          which excludes restoring of certain variables''')
@@ -265,7 +265,7 @@ def get_dataset_size_test(dataset_name: str):
 
 
 def get_dataset_size_validate(dataset_name: str):
-  if dataset_name is 'smallNORB' or dataset_name is 'mnist' or dataset_name is 'cifar10':
+  if dataset_name == 'smallNORB' or dataset_name == 'mnist' or dataset_name == 'cifar10':
     logger.info("%s pipeline is not set up for validation, using test set for validation instead"%dataset_name)
     return get_dataset_size_test(dataset_name)
   options = {'imagenet64': 50000}
