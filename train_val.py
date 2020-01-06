@@ -333,7 +333,9 @@ def main(args):
     # Restore previous checkpoint
     # AG 26/09/2018: where should this go???
     if FLAGS.load_dir is not None:
-      prev_step = load_training(saver, sess_train, FLAGS.load_dir)
+      load_dir_checkpoint = os.path.join(FLAGS.load_dir, "train", "checkpoint")
+      load_dir_chechpoint = os.path.join(FLAGS.load_dir, 'train/checkpoint')
+      prev_step = load_training(saver, sess_train, load_dir_chechpoint)
     else:
       prev_step = 0
 
@@ -624,7 +626,7 @@ def load_training(saver, session, load_dir):
     The latest saved step.
   """
   
-  if tf.gfile.Exists(load_dir):   
+  if tf.gfile.Exists(load_dir): 
     ckpt = tf.train.get_checkpoint_state(load_dir)
     if ckpt and ckpt.model_checkpoint_path:
       saver.restore(session, ckpt.model_checkpoint_path)
