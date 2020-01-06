@@ -190,20 +190,20 @@ def main(args):
 
 
     ckpts_to_test = []
-    load_dir_chechpoint = os.path.join(FLAGS.load_dir, "train", "checkpoint")
+    load_dir_checkpoint = os.path.join(FLAGS.load_dir, "train", "checkpoint")
     
     # Evaluate the latest ckpt in dir
     if FLAGS.ckpt_name is None:
-      latest_ckpt = tf.train.latest_checkpoint(load_dir_chechpoint)
+      latest_ckpt = tf.train.latest_checkpoint(load_dir_checkpoint)
       ckpts_to_test.append(latest_ckpt)
 
     # Evaluate all ckpts in dir  
     elif FLAGS.ckpt_name == "all":
       # Get list of files in firectory and sort by date created
-      filenames = os.listdir(load_dir_chechpoint)
+      filenames = os.listdir(load_dir_checkpoint)
       regex = re.compile(r'.*.index')
       filenames = filter(regex.search, filenames)
-      data_ckpts = (os.path.join(load_dir_chechpoint, fn) for fn in filenames)
+      data_ckpts = (os.path.join(load_dir_checkpoint, fn) for fn in filenames)
       data_ckpts = ((os.stat(path), path) for path in data_ckpts)
 
       # regular files, insert creation date
@@ -215,7 +215,7 @@ def main(args):
         
     # Evaluate ckpt specified by name
     else:
-      ckpt_name = os.path.join(load_dir_chechpoint, FLAGS.ckpt_name)
+      ckpt_name = os.path.join(load_dir_checkpoint, FLAGS.ckpt_name)
       ckpts_to_test.append(ckpt_name)    
       
       
