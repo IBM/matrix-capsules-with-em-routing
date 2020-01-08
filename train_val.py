@@ -334,8 +334,7 @@ def main(args):
     # AG 26/09/2018: where should this go???
     if FLAGS.load_dir is not None:
       load_dir_checkpoint = os.path.join(FLAGS.load_dir, "train", "checkpoint")
-      load_dir_chechpoint = os.path.join(FLAGS.load_dir, 'train/checkpoint')
-      prev_step = load_training(saver, sess_train, load_dir_chechpoint)
+      prev_step = load_training(saver, sess_train, load_dir_checkpoint)
     else:
       prev_step = 0
 
