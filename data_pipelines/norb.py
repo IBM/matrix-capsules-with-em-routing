@@ -132,7 +132,7 @@ def _val_preprocess(img, lab, cat, elv, azi, lit):
   return img, lab, cat, elv, azi, lit
   
 
-def input_fn(path, is_train: bool, force_train_set):
+def input_fn(path, is_train: bool, force_set=None):
   """Input pipeline for smallNORB using tf.data.
   
   Author:
@@ -144,10 +144,10 @@ def input_fn(path, is_train: bool, force_train_set):
   """
 
   import re
-  if is_train:
-    CHUNK_RE = re.compile(r"train.*\.tfrecords")
-  else:
-    CHUNK_RE = re.compile(r"test.*\.tfrecords")
+  split = "train" if is_train else "test"
+  if force_set is not None:
+    split = force_set
+  CHUNK_RE = re.compile(r"%s.*\.tfrecords"%split)
 
   chunk_files = [os.path.join(path, fname)
            for fname in os.listdir(path)
@@ -178,13 +178,10 @@ def input_fn(path, is_train: bool, force_train_set):
   dataset = dataset.shuffle(buffer_size = capacity)
     
   # 4. batch
-  if is_train:
-    dataset = dataset.batch(FLAGS.batch_size, drop_remainder=True)
-  else:
-    dataset = dataset.batch(FLAGS.batch_size, drop_remainder=False)
+  dataset = dataset.batch(FLAGS.batch_size, drop_remainder=True)
 
   # 5. repeat
-  dataset = dataset.repeat(count=FLAGS.epoch)
+  dataset = dataset.repeat()
   
   # 6. prefetch
   dataset = dataset.prefetch(1)
@@ -192,7 +189,7 @@ def input_fn(path, is_train: bool, force_train_set):
   return dataset
 
 
-def create_inputs_norb(path, is_train: bool, force_train_set = False):
+def create_inputs_norb(path, is_train: bool, force_set=None):
   """Get a batch from the input pipeline.
   
   Author:
@@ -204,7 +201,7 @@ def create_inputs_norb(path, is_train: bool, force_train_set = False):
   """
   
   # Create batched dataset
-  dataset = input_fn(path, is_train, force_train_set)
+  dataset = input_fn(path, is_train, force_set)
   
   # Create one-shot iterator
   iterator = dataset.make_one_shot_iterator()

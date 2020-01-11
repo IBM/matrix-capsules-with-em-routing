@@ -26,7 +26,8 @@ logger = daiquiri.getLogger(__name__)
 def build_arch_smallnorb(inp, is_train: bool, num_classes: int, y=None):
   
   logger.info('input shape: {}'.format(inp.get_shape()))
-  batch_size = int(inp.get_shape()[0])
+  batch_size = FLAGS.batch_size//FLAGS.num_gpus
+  inp.set_shape([batch_size] + inp.get_shape()[1:].as_list())
   spatial_size = int(inp.get_shape()[1])
 
   # xavier initialization is necessary here to provide higher stability
@@ -71,9 +72,9 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int, y=None):
       activation_fn=tf.nn.relu)
       
       spatial_size = int(output.get_shape()[1])
+      logger.info('relu_conv1 output shape: {}'.format(output.get_shape()))
       assert output.get_shape() == [batch_size, spatial_size, spatial_size, 
                                     FLAGS.A]
-      logger.info('relu_conv1 output shape: {}'.format(output.get_shape()))
     
     #----- Primary Capsules -----#
     with tf.variable_scope('primary_caps') as scope:
@@ -101,13 +102,13 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int, y=None):
           shape=[batch_size, spatial_size, spatial_size, FLAGS.B, 1], 
           name="activation")
       
+      logger.info('primary_caps pose shape: {}'.format(pose.get_shape()))
+      logger.info('primary_caps activation shape {}'
+                  .format(activation.get_shape()))
       assert pose.get_shape() == [batch_size, spatial_size, spatial_size, 
                                   FLAGS.B, 16]
       assert activation.get_shape() == [batch_size, spatial_size, spatial_size,
                                         FLAGS.B, 1]
-      logger.info('primary_caps pose shape: {}'.format(pose.get_shape()))
-      logger.info('primary_caps activation shape {}'
-                  .format(activation.get_shape()))
       
       tf.summary.histogram("activation", activation)
        
@@ -229,7 +230,7 @@ def build_arch_smallnorb(inp, is_train: bool, num_classes: int, y=None):
 #------------------------------------------------------------------------------
 def build_arch_deepcap(inp, is_train: bool, num_classes: int, y=None):
   logger.info('input shape: {}'.format(inp.get_shape()))
-  batch_size = int(inp.get_shape()[0])
+  batch_size = FLAGS.batch_size 
   spatial_size = int(inp.get_shape()[1])
 
   # xavier initialization is necessary here to provide higher stability
@@ -476,7 +477,7 @@ def build_arch_deepcap(inp, is_train: bool, num_classes: int, y=None):
 #------------------------------------------------------------------------------
 def build_arch_rescap(inp, is_train: bool, num_classes: int, y=None):
   logger.info('input shape: {}'.format(inp.get_shape()))
-  batch_size = int(inp.get_shape()[0])
+  batch_size = FLAGS.batch_size 
   spatial_size = int(inp.get_shape()[1])
 
   # xavier initialization is necessary here to provide higher stability

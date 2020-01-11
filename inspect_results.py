@@ -233,7 +233,7 @@ def main(args):
       saver.restore(sess_test, ckpt)
 
       if FLAGS.save_patch:
-        out = sess_test.run(test_metrics['patch'], feed_dict=feed_dict)
+        out = sess_test.run(test_metrics['patch'])
         patch = out
         if patch.shape[-1] == 1:
           patch = np.squeeze(patch, axis=-1)

@@ -265,7 +265,7 @@ def get_dataset_size_test(dataset_name: str):
 
 
 def get_dataset_size_validate(dataset_name: str):
-  if dataset_name == 'smallNORB' or dataset_name == 'mnist' or dataset_name == 'cifar10':
+  if dataset_name == 'smallNORB' or dataset_name == 'mnist' or dataset_name == 'cifar10' or dataset_name == 'svhn':
     logger.info("%s pipeline is not set up for validation, using test set for validation instead"%dataset_name)
     return get_dataset_size_test(dataset_name)
   options = {'imagenet64': 50000}
