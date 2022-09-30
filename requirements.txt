@@ -8,7 +8,7 @@ grpcio==1.16.1
 h5py==2.9.0
 icc-rt==2019.0
 intel-openmp==2019.0
-joblib==0.13.2
+joblib==1.2.0
 Keras-Applications==1.0.8
 Keras-Preprocessing==1.1.0
 Markdown==3.1.1
